@@ -14,30 +14,32 @@ type Command = {
 };
 
 function App() {
-  const [commands, setCommands] = useState<Command[]>([
-    {
-      "time": new Date("2024-06-26T17:18:32.163Z"),
-      "text": "create table users (name text);",
-      "id": "01J1ARWQPD1A0S7CHEXFT21CMM",
-      "output": []
-    },
-    {
-      "time": new Date("2024-06-26T17:18:53.056Z"),
-      "text": "insert into users (name) values ('dan');",
-      "id": "01J1ARXC3VXH77C6V7ZWXS5QS7",
-      "output": []
-    },
-    {
-      "time": new Date("2024-06-26T17:19:00.166Z"),
-      "text": "select * from users;",
-      "id": "01J1ARXK23N0XA5FN8VN8RRQ07",
-      "output": [
-        {
-          "name": "dan"
-        }
-      ]
-    }
-  ]);
+  const [commands, setCommands] = useState<Command[]>([]
+    //   [
+    //   {
+    //     "time": new Date("2024-06-26T17:18:32.163Z"),
+    //     "text": "create table users (name text);",
+    //     "id": "01J1ARWQPD1A0S7CHEXFT21CMM",
+    //     "output": []
+    //   },
+    //   {
+    //     "time": new Date("2024-06-26T17:18:53.056Z"),
+    //     "text": "insert into users (name) values ('dan');",
+    //     "id": "01J1ARXC3VXH77C6V7ZWXS5QS7",
+    //     "output": []
+    //   },
+    //   {
+    //     "time": new Date("2024-06-26T17:19:00.166Z"),
+    //     "text": "select * from users;",
+    //     "id": "01J1ARXK23N0XA5FN8VN8RRQ07",
+    //     "output": [
+    //       {
+    //         "name": "dan"
+    //       }
+    //     ]
+    //   }
+    // ]
+  );
   const [currentText, setCurrentText] = useState<string>('');
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
   const [db, setDB] = useState<Database | null>(null);
@@ -99,6 +101,7 @@ function App() {
   };
 
   const handleKeyPressForPrevCommand = (event: KeyboardEvent<HTMLDivElement>) => {
+    console.log("called", event.key, commandCursor)
     if (event.key !== 'Enter' || commandCursor === null) {
       return
     }
@@ -107,10 +110,10 @@ function App() {
 
     const command = commands[commandCursor];
 
-
     if (command.text.trim() === '') {
       return;
     }
+
     const text = command.text.trim()
 
     const newId = ulid();
@@ -136,23 +139,40 @@ function App() {
       return;
     }
 
-    let result = db.exec({
-      sql: query,
-      rowMode: 'object',
-    }) as unknown as any[];
+    try {
 
-    console.log(result, id);
+      let result = db.exec({
+        sql: query,
+        rowMode: 'object',
+      }) as unknown as any[];
 
-    setCommands((prevCommands) => {
-      const index = prevCommands.findIndex(c => c.id === id);
-      console.log({ index })
-      let newCommands = [...prevCommands];
+      console.log(result, id);
 
-      if (index !== -1) {
-        newCommands[index].output = result;
-      }
-      return newCommands;
-    });
+      setCommands((prevCommands) => {
+        const index = prevCommands.findIndex(c => c.id === id);
+        console.log({ index })
+        let newCommands = [...prevCommands];
+
+        if (index !== -1) {
+          newCommands[index].output = result;
+        }
+        return newCommands;
+      });
+
+    } catch (err: any) {
+      console.error(err.message)
+
+      setCommands((prevCommands) => {
+        const index = prevCommands.findIndex(c => c.id === id);
+        console.log({ index })
+        let newCommands = [...prevCommands];
+
+        if (index !== -1) {
+          newCommands[index].error = err.message;
+        }
+        return newCommands;
+      });
+    }
 
   };
 
@@ -207,13 +227,14 @@ function App() {
                 {command.time.toLocaleTimeString()}
               </div>
               <div className='commandText' data-index={index} onClick={selectCommand}
+                onKeyDown={handleKeyPressForPrevCommand}
               >{command.text}</div>
               <div className='rerunSection'>
-                <button className='runCommandBtn'>»</button>
+                {/* <button className='runCommandBtn'>»</button> */}
               </div>
             </div>
-            {command.output ? <pre>{JSON.stringify(command.output, null, 2)}</pre> : null}
-            {command.error ? <pre className='w-full bg-red-800 text-red'>{command.error}</pre> : null}
+            {command.output ? <pre className="resultBlock">{JSON.stringify(command.output, null, 2)}</pre> : null}
+            {command.error ? <pre className='w-full bg-red-800 text-red errBlock'>{command.error}</pre> : null}
 
           </div>
         )
@@ -226,6 +247,7 @@ function App() {
         className="currCommand"
         value={currentText}
         onChange={(event) => {
+          setCommandCursor(null)
           setCurrentText(event.target.value);
         }}
         placeholder='enter SQL commands...'
