@@ -4,7 +4,8 @@ To do:
 
 - display row output
 - side-by-side vs top-bottom toggle vs inline
-- store row results to commands
+- ~~store row results to commands~~
+  - link to output view toggle
 - export schema and rows
 - db explorer (show tables)
-- surface errors
+- ~~surface errors~~
