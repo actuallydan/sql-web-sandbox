@@ -1,16 +1,43 @@
 "use client"
 
-import { useState, useEffect, type KeyboardEvent } from 'react';
+import { useState, useEffect, type KeyboardEvent, type MouseEvent } from 'react';
 import type { Database } from '@sqlite.org/sqlite-wasm';
 import { initializeSQLite } from '../utils/sqlite';
+import { ulid } from "ulidx";
 
 type Command = {
   text: string;
   time: Date;
+  id: string;
+  output?: any[];
+  error?: string;
 };
 
 function App() {
-  const [commands, setCommands] = useState<Command[]>([]);
+  const [commands, setCommands] = useState<Command[]>([
+    {
+      "time": new Date("2024-06-26T17:18:32.163Z"),
+      "text": "create table users (name text);",
+      "id": "01J1ARWQPD1A0S7CHEXFT21CMM",
+      "output": []
+    },
+    {
+      "time": new Date("2024-06-26T17:18:53.056Z"),
+      "text": "insert into users (name) values ('dan');",
+      "id": "01J1ARXC3VXH77C6V7ZWXS5QS7",
+      "output": []
+    },
+    {
+      "time": new Date("2024-06-26T17:19:00.166Z"),
+      "text": "select * from users;",
+      "id": "01J1ARXK23N0XA5FN8VN8RRQ07",
+      "output": [
+        {
+          "name": "dan"
+        }
+      ]
+    }
+  ]);
   const [currentText, setCurrentText] = useState<string>('');
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
   const [db, setDB] = useState<Database | null>(null);
@@ -23,21 +50,25 @@ function App() {
         }
 
         event.preventDefault();
-        if (currentText.trim() === '') {
+        const text = currentText.trim();
+
+        if (text === '') {
           return;
         }
+
+        const newId = ulid();
 
         setCommands((prevEvents) => {
           const newCommand = {
             time: new Date(),
-            text: currentText.trim(),
+            text: text,
+            id: newId
           };
 
           return [...prevEvents, newCommand];
         });
 
-        executeQuery(currentText);
-
+        executeQuery(text, newId);
         setCurrentText('');
         setCommandCursor(null);
 
@@ -67,7 +98,40 @@ function App() {
     }
   };
 
-  const executeQuery = async (query: string) => {
+  const handleKeyPressForPrevCommand = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (event.key !== 'Enter' || commandCursor === null) {
+      return
+    }
+
+    event.preventDefault();
+
+    const command = commands[commandCursor];
+
+
+    if (command.text.trim() === '') {
+      return;
+    }
+    const text = command.text.trim()
+
+    const newId = ulid();
+
+    setCommands((prevEvents) => {
+      const newCommand = {
+        time: new Date(),
+        text,
+        id: newId
+      };
+
+      return [...prevEvents, newCommand];
+    });
+
+    executeQuery(text, newId);
+
+    setCurrentText('');
+    setCommandCursor(null);
+
+  }
+  const executeQuery = async (query: string, id: string) => {
     if (!db) {
       return;
     }
@@ -75,8 +139,21 @@ function App() {
     let result = db.exec({
       sql: query,
       rowMode: 'object',
+    }) as unknown as any[];
+
+    console.log(result, id);
+
+    setCommands((prevCommands) => {
+      const index = prevCommands.findIndex(c => c.id === id);
+      console.log({ index })
+      let newCommands = [...prevCommands];
+
+      if (index !== -1) {
+        newCommands[index].output = result;
+      }
+      return newCommands;
     });
-    console.log(result);
+
   };
 
   const initSqlite = async () => {
@@ -89,6 +166,14 @@ function App() {
       console.error(err)
     }
   };
+
+  const selectCommand = (event: MouseEvent<HTMLDivElement>) => {
+    const index = event.currentTarget.getAttribute('data-index');
+    if (!index) {
+      return;
+    }
+    setCommandCursor(parseInt(index, 10))
+  }
 
   useEffect(() => {
     initSqlite();
@@ -106,27 +191,46 @@ function App() {
     }
   }, [commandCursor]);
 
+  console.log(commands)
   return (
     <div className="wrapper">
       {/* output */}
-      {commands.map((command) => (
-        <div className="prevCommand" key={command.time.getTime()}>
-          <span className="timestampText">
-            {command.time.toLocaleTimeString()}
-          </span>{' '}
-          <span>{command.text}</span>
-        </div>
-      ))}
+      {commands.map((command, index) => {
+
+        const commandClass = index === commandCursor ? 'prevCommand activeCommand' : 'prevCommand';
+
+        return (
+          <div key={command.id}>
+
+            <div className={commandClass}>
+              <div className="timestampText">
+                {command.time.toLocaleTimeString()}
+              </div>
+              <div className='commandText' data-index={index} onClick={selectCommand}
+              >{command.text}</div>
+              <div className='rerunSection'>
+                <button className='runCommandBtn'>»</button>
+              </div>
+            </div>
+            {command.output ? <pre>{JSON.stringify(command.output, null, 2)}</pre> : null}
+            {command.error ? <pre className='w-full bg-red-800 text-red'>{command.error}</pre> : null}
+
+          </div>
+        )
+      })}
 
       <textarea
+        autoFocus
+        tabIndex={0}
         onKeyDown={handleKeyPress}
         className="currCommand"
         value={currentText}
         onChange={(event) => {
           setCurrentText(event.target.value);
         }}
+        placeholder='enter SQL commands...'
       />
-      <span style={{ color: '#fff' }}>{commandCursor}</span>
+
     </div>
   );
 }
