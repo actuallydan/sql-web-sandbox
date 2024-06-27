@@ -60,13 +60,34 @@ button:focus-visible {
 #root {
   margin: 0;
   width: 100%;
-  padding: 2rem;
+  /* padding: 2rem; */
   box-sizing: border-box;
+  display: flex;
+  flex-direction: row;
+}
+.terminal {
+  flex-grow: 1;
+}
+.sidebar {
+  width: 10rem;
+  /* position: fixed; */
+  padding: 0.5rem;
+  font-family: monospace;
+  max-height: 100dvh;
+  overflow-y: scroll;
 }
 
-.wrapper {
-  width: 100%;
+.sidebar-table-wrapper {
+  margin: 1rem 0 0 0.5rem;
+
+  li {
+    margin-left: 0.5rem;
+     span {
+      margin-right: 0.25rem
+     }
+  }
 }
+
 .prevCommand {
   width: 100%;
   font-family: monospace;

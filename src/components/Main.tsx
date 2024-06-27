@@ -13,8 +13,23 @@ type Command = {
     error?: string;
 };
 
+type TableSchema = {
+    name: string;
+    columns: TableColumn[]
+}
+
+type TableColumn = {
+    "cid": number, // column id (index)
+    "name": string, // column tyoe
+    "type": string, // column data type (capitalized)
+    "notnull": number, // boolean
+    "dflt_value": any,
+    "pk": number // boolean
+}
+
 function App() {
-    const [commands, setCommands] = useState<Command[]>([]
+    const [commands, setCommands] = useState<Command[]>(
+        []
         //   [
         //   {
         //     "time": new Date("2024-06-26T17:18:32.163Z"),
@@ -43,6 +58,7 @@ function App() {
     const [currentText, setCurrentText] = useState<string>('');
     const [commandCursor, setCommandCursor] = useState<number | null>(null);
     const [db, setDB] = useState<Database | null>(null);
+    const [tables, setTables] = useState<TableSchema[]>([])
 
     const handleKeyPress = (event: KeyboardEvent<HTMLTextAreaElement>) => {
         switch (event.key) {
@@ -134,6 +150,40 @@ function App() {
         setCommandCursor(null);
 
     }
+    const getTables = () => {
+        if (!db) {
+            return
+        }
+
+        try {
+
+            const result = db.exec({
+                sql: "SELECT name FROM sqlite_master WHERE type='table';",
+                rowMode: 'object'
+            }) as unknown as { name: string }[];
+
+
+            console.log({ tables: result })
+
+            const tables = result.map(table => {
+
+                let columns = db.exec({
+                    sql: `pragma table_info([${table.name}]);`,
+                    rowMode: 'object'
+                }) as unknown as TableColumn[];
+
+                return ({
+                    name: table.name,
+                    columns
+                }) as TableSchema
+            })
+
+            setTables(tables);
+
+        } catch (err: any) {
+            console.error(err.message)
+        }
+    }
     const executeQuery = async (query: string, id: string) => {
         if (!db) {
             return;
@@ -158,6 +208,8 @@ function App() {
                 }
                 return newCommands;
             });
+
+            getTables()
 
         } catch (err: any) {
             console.error(err.message)
@@ -201,7 +253,7 @@ function App() {
 
     useEffect(() => {
         if (commandCursor === null) {
-            setCurrentText('');
+            // setCurrentText('');
             return;
         }
 
@@ -211,48 +263,68 @@ function App() {
         }
     }, [commandCursor]);
 
-    console.log(commands)
     return (
-        <div className="wrapper">
-            {/* output */}
-            {commands.map((command, index) => {
-
-                const commandClass = index === commandCursor ? 'prevCommand activeCommand' : 'prevCommand';
-
-                return (
-                    <div key={command.id}>
-
-                        <div className={commandClass}>
-                            <div className="timestampText">
-                                {command.time.toLocaleTimeString()}
-                            </div>
-                            <div className='commandText' data-index={index} onClick={selectCommand}
-                                onKeyDown={handleKeyPressForPrevCommand}
-                            >{command.text}</div>
-                            <div className='rerunSection'>
-                                {/* <button className='runCommandBtn'>»</button> */}
-                            </div>
+        <div id="root">
+            <div className='sidebar'>
+                <h4>tables</h4>
+                {
+                    tables.map(t => (
+                        <div className='sidebar-table-wrapper' key={t.name}>
+                            <p>{t.name}</p>
+                            <ul>
+                                {t.columns.map((c: TableColumn) => (
+                                    <li key={c.name}><span className='text-gray-400'>└</span><span className='italic'>{c.name}</span><span className='text-sm'>{c.type}</span></li>
+                                ))}
+                            </ul>
                         </div>
-                        {command.output ? <pre className="resultBlock">{JSON.stringify(command.output, null, 2)}</pre> : null}
-                        {command.error ? <pre className='w-full bg-red-800 text-red errBlock'>{command.error}</pre> : null}
+                    ))
+                }
+            </div>
+            <div className="terminal">
+                {/* output */}
+                {commands.map((command, index) => {
 
-                    </div>
-                )
-            })}
+                    const commandClass = index === commandCursor ? 'prevCommand activeCommand' : 'prevCommand';
 
-            <textarea
-                autoFocus
-                tabIndex={0}
-                onKeyDown={handleKeyPress}
-                className="currCommand"
-                value={currentText}
-                onChange={(event) => {
-                    setCommandCursor(null)
-                    setCurrentText(event.target.value);
-                }}
-                placeholder='enter SQL commands...'
-            />
+                    return (
+                        <div key={command.id}>
 
+                            <div className={commandClass}>
+                                <div className="timestampText">
+                                    {command.time.toLocaleTimeString()}
+                                </div>
+                                <div className='commandText' data-index={index} onClick={selectCommand}
+                                    onKeyDown={handleKeyPressForPrevCommand}
+                                >{command.text}</div>
+                                <div className='rerunSection'>
+                                    {/* <button className='runCommandBtn'>»</button> */}
+                                </div>
+                            </div>
+                            {command.output ? <div>
+                                <p className='text-xs text-gray-300 p-1'>{command.output.length} row(s) returned </p>
+                                <pre className="resultBlock">{JSON.stringify(command.output, null, 2)}</pre>
+                            </div>
+                                : null}
+                            {command.error ? <pre className='w-full bg-red-800 text-red errBlock'>{command.error}</pre> : null}
+
+                        </div>
+                    )
+                })}
+
+                <textarea
+                    autoFocus
+                    tabIndex={0}
+                    onKeyDown={handleKeyPress}
+                    className="currCommand"
+                    value={currentText}
+                    onChange={(event) => {
+                        setCommandCursor(null)
+                        setCurrentText(event.target.value);
+                    }}
+                    placeholder='enter SQL commands...'
+                />
+
+            </div>
         </div>
     );
 }
