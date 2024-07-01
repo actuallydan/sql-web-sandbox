@@ -141,3 +141,32 @@ padding: 0.25rem;
 font-size: 0.8rem;
 font-family: monospace;
 }
+
+.mentions-portal {
+  
+    top: -9999px;
+    left: -9999px;
+    position: absolute;
+    z-index: 1;
+    padding: 0.25rem;
+    /* background: 'white', */
+    /* borderRadius: '4px', */
+    /* boxShadow: '0 1px 5px rgba(0,0,0,.2)', */
+  
+}
+
+.mention-item  {
+  padding: 0.25rem;
+  background: #FFFFFF30;
+}
+.mention-item.selected-item {
+  background: #00dffc40;
+}
+
+.setMentionItem {
+  padding: 0.25rem;
+  /* margin: '0 1px'; */
+  verticalAlign: baseline;
+  display: inline-block;
+  fontSize: 0.9rem;
+}

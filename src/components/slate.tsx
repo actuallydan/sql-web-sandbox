@@ -4,9 +4,8 @@ import React, {
   useRef,
   useEffect,
   useState,
-  type ReactNode,
 } from 'react';
-import { Editor, Transforms, Range, createEditor, Descendant } from 'slate';
+import { Editor, Transforms, Range, createEditor, Descendant, Node } from 'slate';
 import { withHistory } from 'slate-history';
 import {
   Slate,
@@ -20,21 +19,21 @@ import {
 import { BaseEditor, BaseRange } from 'slate';
 import { HistoryEditor } from 'slate-history';
 
-import { createPortal } from 'react-dom';
+import Portal from '../components/Portal';
 
-const MentionExample = () => {
+const AutoCompleteInput = ({ characters = [], commitCommand }: { characters: string[], commitCommand: (str: string) => void }) => {
   const ref = useRef<HTMLDivElement | null>();
-  const [target, setTarget] = useState<Range | undefined>();
+  const [target, setTarget] = useState<Range | null>();
   const [index, setIndex] = useState(0);
   const [search, setSearch] = useState('');
-  const renderElement = useCallback((props) => <Element {...props} />, []);
-  const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
+  const renderElement = useCallback((props: any) => <Element {...props} />, []);
+  const renderLeaf = useCallback((props: any) => <Leaf {...props} />, []);
   const editor = useMemo(
     () => withMentions(withReact(withHistory(createEditor()))),
     []
   );
 
-  const chars = CHARACTERS.filter((c) =>
+  const chars = characters.filter((c) =>
     c.toLowerCase().startsWith(search.toLowerCase())
   ).slice(0, 10);
 
@@ -58,12 +57,24 @@ const MentionExample = () => {
             Transforms.select(editor, target);
             insertMention(editor, chars[index]);
             setTarget(null);
+            // do something if we're not currently selecting anything
+            // commitCommand()
             break;
           case 'Escape':
             event.preventDefault();
             setTarget(null);
             break;
         }
+
+        return;
+      }
+
+      if (event.key === 'Enter' && !event.shiftKey) {
+        console.log(search, editor, target, chars, index)
+        commitCommand(editor.children.map((n: Node) => Node.string(n)).join('\n'))
+        // reset editor
+        editor.removeNodes();
+        editor.children = emptyMessage;
       }
     },
     [chars, editor, index, target]
@@ -72,6 +83,11 @@ const MentionExample = () => {
   useEffect(() => {
     if (target && chars.length > 0) {
       const el = ref.current;
+
+      if (!el) {
+        return;
+      }
+
       const domRange = ReactEditor.toDOMRange(editor, target);
       const rect = domRange.getBoundingClientRect();
       el.style.top = `${rect.top + window.pageYOffset + 24}px`;
@@ -82,7 +98,7 @@ const MentionExample = () => {
   return (
     <Slate
       editor={editor}
-      initialValue={initialValue}
+      initialValue={emptyMessage}
       onChange={() => {
         const { selection } = editor;
 
@@ -108,27 +124,20 @@ const MentionExample = () => {
 
         setTarget(null);
       }}
+
     >
       <Editable
         renderElement={renderElement}
         renderLeaf={renderLeaf}
         onKeyDown={onKeyDown}
         placeholder="Enter some text..."
+        className='text-sm'
       />
       {target && chars.length > 0 && (
         <Portal>
           <div
-            ref={ref}
-            style={{
-              top: '-9999px',
-              left: '-9999px',
-              position: 'absolute',
-              zIndex: 1,
-              padding: '3px',
-              background: 'white',
-              borderRadius: '4px',
-              boxShadow: '0 1px 5px rgba(0,0,0,.2)',
-            }}
+            ref={ref as React.MutableRefObject<HTMLDivElement>}
+            className="mentions-portal"
             data-cy="mentions-portal"
           >
             {chars.map((char, i) => (
@@ -139,11 +148,8 @@ const MentionExample = () => {
                   insertMention(editor, char);
                   setTarget(null);
                 }}
-                style={{
-                  padding: '1px 3px',
-                  borderRadius: '3px',
-                  background: i === index ? '#B4D5FF' : 'transparent',
-                }}
+
+                className={"mention-item " + (i === index ? "selected-item" : "")}
               >
                 {char}
               </div>
@@ -155,7 +161,7 @@ const MentionExample = () => {
   );
 };
 
-const withMentions = (editor) => {
+const withMentions = (editor: Editor) => {
   const { isInline, isVoid, markableVoid } = editor;
 
   editor.isInline = (element) => {
@@ -173,7 +179,7 @@ const withMentions = (editor) => {
   return editor;
 };
 
-const insertMention = (editor, character) => {
+const insertMention = (editor: Editor, character: string) => {
   const mention: MentionElement = {
     type: 'mention',
     character,
@@ -186,6 +192,7 @@ const insertMention = (editor, character) => {
 // Borrow Leaf renderer from the Rich Text example.
 // In a real project you would get this via `withRichText(editor)` or similar.
 const Leaf = ({ attributes, children, leaf }) => {
+  console.log({ attributes, children, leaf })
   if (leaf.bold) {
     children = <strong>{children}</strong>;
   }
@@ -219,28 +226,16 @@ const Mention = ({ attributes, children, element }) => {
   const selected = useSelected();
   const focused = useFocused();
   const style: React.CSSProperties = {
-    padding: '3px 3px 2px',
-    margin: '0 1px',
-    verticalAlign: 'baseline',
-    display: 'inline-block',
-    borderRadius: '4px',
-    backgroundColor: '#eee',
-    fontSize: '0.9em',
     boxShadow: selected && focused ? '0 0 0 2px #B4D5FF' : 'none',
   };
-  // See if our empty text child has any styling marks applied and apply those
-  if (element.children[0].bold) {
-    style.fontWeight = 'bold';
-  }
-  if (element.children[0].italic) {
-    style.fontStyle = 'italic';
-  }
+
   return (
     <span
       {...attributes}
       contentEditable={false}
       data-cy={`mention-${element.character.replace(' ', '-')}`}
       style={style}
+      className='setMentionItem'
     >
       {element.character}
       {children}
@@ -248,174 +243,19 @@ const Mention = ({ attributes, children, element }) => {
   );
 };
 
-const initialValue: Descendant[] = [
+const emptyMessage: Descendant[] = [
   {
     type: 'paragraph',
     children: [
       {
-        text: 'This example shows how you might implement a simple ',
+        text: ' ',
       },
     ],
   },
 ];
 
-const CHARACTERS = [
-  'abort',
-  'action',
-  'add',
-  'after',
-  'all',
-  'alter',
-  'always',
-  'analyze',
-  'and',
-  'as',
-  'asc',
-  'attach',
-  'autoincrement',
-  'before',
-  'begin',
-  'between',
-  'by',
-  'cascade',
-  'case',
-  'cast',
-  'check',
-  'collate',
-  'column',
-  'commit',
-  'conflict',
-  'constraint',
-  'create',
-  'cross',
-  'current',
-  'current_date',
-  'current_time',
-  'current_timestamp',
-  'database',
-  'default',
-  'deferrable',
-  'deferred',
-  'delete',
-  'desc',
-  'detach',
-  'distinct',
-  'do',
-  'drop',
-  'each',
-  'else',
-  'end',
-  'escape',
-  'except',
-  'exclude',
-  'exclusive',
-  'exists',
-  'explain',
-  'fail',
-  'filter',
-  'first',
-  'following',
-  'for',
-  'foreign',
-  'from',
-  'full',
-  'generated',
-  'glob',
-  'group',
-  'groups',
-  'having',
-  'if',
-  'ignore',
-  'immediate',
-  'in',
-  'index',
-  'indexed',
-  'initially',
-  'inner',
-  'insert',
-  'instead',
-  'intersect',
-  'into',
-  'is',
-  'isnull',
-  'join',
-  'key',
-  'last',
-  'left',
-  'like',
-  'limit',
-  'match',
-  'materialized',
-  'natural',
-  'no',
-  'not',
-  'nothing',
-  'notnull',
-  'null',
-  'nulls',
-  'of',
-  'offset',
-  'on',
-  'or',
-  'order',
-  'others',
-  'outer',
-  'over',
-  'partition',
-  'plan',
-  'pragma',
-  'preceding',
-  'primary',
-  'query',
-  'raise',
-  'range',
-  'recursive',
-  'references',
-  'regexp',
-  'reindex',
-  'release',
-  'rename',
-  'replace',
-  'restrict',
-  'returning',
-  'right',
-  'rollback',
-  'row',
-  'rows',
-  'savepoint',
-  'select',
-  'set',
-  'table',
-  'temp',
-  'temporary',
-  'then',
-  'ties',
-  'to',
-  'transaction',
-  'trigger',
-  'unbounded',
-  'union',
-  'unique',
-  'update',
-  'using',
-  'vacuum',
-  'values',
-  'view',
-  'virtual',
-  'when',
-  'where',
-  'window',
-  'with',
-  'without',
-];
 
-export default MentionExample;
-
-export const Portal = ({ children }: { children?: ReactNode }) => {
-  return typeof document === 'object'
-    ? createPortal(children, document.body)
-    : null;
-};
+export default AutoCompleteInput;
 
 export type BlockQuoteElement = {
   type: 'block-quote';
@@ -517,8 +357,6 @@ type CustomElement =
   | CodeLineElement;
 
 export type CustomText = {
-  bold?: boolean;
-  italic?: boolean;
   code?: boolean;
   text: string;
 };

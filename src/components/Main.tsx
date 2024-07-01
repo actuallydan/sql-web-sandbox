@@ -4,6 +4,8 @@ import { useState, useEffect, type KeyboardEvent, type MouseEvent } from 'react'
 import type { Database } from '@sqlite.org/sqlite-wasm';
 import { initializeSQLite } from '../utils/sqlite';
 import { ulid } from "ulidx";
+import AutoCompleteInput from './slate';
+import { characters } from '@/data/keywords';
 
 type Command = {
     text: string;
@@ -323,6 +325,7 @@ function App() {
                     }}
                     placeholder='enter SQL commands...'
                 />
+                <AutoCompleteInput characters={characters} commitCommand={console.log} />
 
             </div>
         </div>
