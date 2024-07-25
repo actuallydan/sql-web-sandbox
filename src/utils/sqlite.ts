@@ -2,6 +2,7 @@ import sqlite3InitModule, {
   Sqlite3Static,
   type Database,
 } from "@sqlite.org/sqlite-wasm";
+import type { TableColumn, TableSchema, Command } from "@/types/sql";
 
 const log = console.log;
 const error = console.error;
@@ -26,6 +27,51 @@ export const initializeSQLite = async (): Promise<Database> => {
     error("Initialization error:", err.name, err.message);
     throw Error(err.message);
   }
+};
+
+export const API = {
+  getTables: (db: Database) => {
+    if (!db) {
+      return [];
+    }
+
+    try {
+      const result = db.exec({
+        sql: "SELECT name FROM sqlite_master WHERE type='table';",
+        rowMode: "object",
+      }) as unknown as { name: string }[];
+
+      const tables = result.map((table) => {
+        let columns = db.exec({
+          sql: `pragma table_info([${table.name}]);`,
+          rowMode: "object",
+        }) as unknown as TableColumn[];
+
+        return {
+          name: table.name,
+          columns,
+        } as TableSchema;
+      });
+
+      return tables;
+    } catch (err: any) {
+      console.error(err.message);
+      return [];
+    }
+  },
+  indexSchema: (arr: TableSchema[]) => {
+    let tables: string[] = [];
+    let columns: string[] = [];
+
+    for (let i = 0; i < arr.length; i++) {
+      tables.push("`" + arr[i].name + "`");
+      columns = columns.concat(
+        arr[i].columns.map((c: TableColumn) => "`" + c.name + "`")
+      );
+    }
+
+    return { tables, columns };
+  },
 };
 
 export const keywords = [
