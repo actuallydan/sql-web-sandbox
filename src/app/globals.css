@@ -44,7 +44,7 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
-@media (prefers-color-scheme: light) {
+/* @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
     background-color: #ffffff;
@@ -55,7 +55,7 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
-}
+} */
 
 #root {
   margin: 0;
@@ -82,9 +82,9 @@ button:focus-visible {
 
   li {
     margin-left: 0.5rem;
-     span {
-      margin-right: 0.25rem
-     }
+    span {
+      margin-right: 0.25rem;
+    }
   }
 }
 
@@ -96,7 +96,8 @@ button:focus-visible {
   flex-direction: row;
   align-items: flex-start;
 }
-.prevCommand:hover, .prevCommand.activeCommand {
+.prevCommand:hover,
+.prevCommand.activeCommand {
   background: #00dffc30;
 }
 .timestampText {
@@ -104,14 +105,14 @@ button:focus-visible {
   color: #00a30e;
 }
 .commandText {
- flex-grow: 1;
- padding: 0 1rem;
+  flex-grow: 1;
+  padding: 0 1rem;
 }
 .rerunSection {
   display: flex;
   justify-content: center;
   align-items: center;
- padding: 0.2rem;
+  padding: 0.2rem;
 }
 .runCommandBtn {
   width: 1rem;
@@ -137,7 +138,34 @@ button:focus-visible {
   font-family: monospace;
 }
 .errBlock {
-padding: 0.25rem;
-font-size: 0.8rem;
-font-family: monospace;
+  padding: 0.25rem;
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+
+.mentions-portal {
+  top: -9999px;
+  left: -9999px;
+  position: absolute;
+  z-index: 1;
+  padding: 0.25rem;
+  /* background: 'white', */
+  /* borderRadius: '4px', */
+  /* boxShadow: '0 1px 5px rgba(0,0,0,.2)', */
+}
+
+.mention-item {
+  padding: 0.25rem;
+  background: #ffffff30;
+}
+.mention-item.selected-item {
+  background: #00dffc40;
+}
+
+.setMentionItem {
+  padding: 0.25rem;
+  /* margin: '0 1px'; */
+  vertical-align: baseline;
+  display: inline-block;
+  font-size: 0.9rem;
 }

@@ -5,9 +5,9 @@ import React, {
   useEffect,
   useState,
   type ReactNode,
-} from 'react';
-import { Editor, Transforms, Range, createEditor, Descendant } from 'slate';
-import { withHistory } from 'slate-history';
+} from "react";
+import { Editor, Transforms, Range, createEditor, Descendant } from "slate";
+import { withHistory } from "slate-history";
 import {
   Slate,
   Editable,
@@ -15,18 +15,18 @@ import {
   withReact,
   useSelected,
   useFocused,
-} from 'slate-react';
+} from "slate-react";
 
-import { BaseEditor, BaseRange } from 'slate';
-import { HistoryEditor } from 'slate-history';
+import { BaseEditor, BaseRange } from "slate";
+import { HistoryEditor } from "slate-history";
 
-import { createPortal } from 'react-dom';
+import { createPortal } from "react-dom";
 
 const MentionExample = () => {
   const ref = useRef<HTMLDivElement | null>();
   const [target, setTarget] = useState<Range | undefined>();
   const [index, setIndex] = useState(0);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState("");
   const renderElement = useCallback((props) => <Element {...props} />, []);
   const renderLeaf = useCallback((props) => <Leaf {...props} />, []);
   const editor = useMemo(
@@ -42,24 +42,24 @@ const MentionExample = () => {
     (event) => {
       if (target && chars.length > 0) {
         switch (event.key) {
-          case 'ArrowDown':
+          case "ArrowDown":
             event.preventDefault();
             const prevIndex = index >= chars.length - 1 ? 0 : index + 1;
             setIndex(prevIndex);
             break;
-          case 'ArrowUp':
+          case "ArrowUp":
             event.preventDefault();
             const nextIndex = index <= 0 ? chars.length - 1 : index - 1;
             setIndex(nextIndex);
             break;
-          case 'Tab':
-          case 'Enter':
+          case "Tab":
+          case "Enter":
             event.preventDefault();
             Transforms.select(editor, target);
             insertMention(editor, chars[index]);
             setTarget(null);
             break;
-          case 'Escape':
+          case "Escape":
             event.preventDefault();
             setTarget(null);
             break;
@@ -88,7 +88,7 @@ const MentionExample = () => {
 
         if (selection && Range.isCollapsed(selection)) {
           const [start] = Range.edges(selection);
-          const wordBefore = Editor.before(editor, start, { unit: 'word' });
+          const wordBefore = Editor.before(editor, start, { unit: "word" });
           const before = wordBefore && Editor.before(editor, wordBefore);
           const beforeRange = before && Editor.range(editor, before, start);
           const beforeText = beforeRange && Editor.string(editor, beforeRange);
@@ -120,14 +120,14 @@ const MentionExample = () => {
           <div
             ref={ref}
             style={{
-              top: '-9999px',
-              left: '-9999px',
-              position: 'absolute',
+              top: "-9999px",
+              left: "-9999px",
+              position: "absolute",
               zIndex: 1,
-              padding: '3px',
-              background: 'white',
-              borderRadius: '4px',
-              boxShadow: '0 1px 5px rgba(0,0,0,.2)',
+              padding: "3px",
+              background: "white",
+              borderRadius: "4px",
+              boxShadow: "0 1px 5px rgba(0,0,0,.2)",
             }}
             data-cy="mentions-portal"
           >
@@ -140,9 +140,9 @@ const MentionExample = () => {
                   setTarget(null);
                 }}
                 style={{
-                  padding: '1px 3px',
-                  borderRadius: '3px',
-                  background: i === index ? '#B4D5FF' : 'transparent',
+                  padding: "1px 3px",
+                  borderRadius: "3px",
+                  background: i === index ? "#B4D5FF" : "transparent",
                 }}
               >
                 {char}
@@ -159,15 +159,15 @@ const withMentions = (editor) => {
   const { isInline, isVoid, markableVoid } = editor;
 
   editor.isInline = (element) => {
-    return element.type === 'mention' ? true : isInline(element);
+    return element.type === "mention" ? true : isInline(element);
   };
 
   editor.isVoid = (element) => {
-    return element.type === 'mention' ? true : isVoid(element);
+    return element.type === "mention" ? true : isVoid(element);
   };
 
   editor.markableVoid = (element) => {
-    return element.type === 'mention' || markableVoid(element);
+    return element.type === "mention" || markableVoid(element);
   };
 
   return editor;
@@ -175,9 +175,9 @@ const withMentions = (editor) => {
 
 const insertMention = (editor, character) => {
   const mention: MentionElement = {
-    type: 'mention',
+    type: "mention",
     character,
-    children: [{ text: '' }],
+    children: [{ text: "" }],
   };
   Transforms.insertNodes(editor, mention);
   Transforms.move(editor);
@@ -208,7 +208,7 @@ const Leaf = ({ attributes, children, leaf }) => {
 const Element = (props) => {
   const { attributes, children, element } = props;
   switch (element.type) {
-    case 'mention':
+    case "mention":
       return <Mention {...props} />;
     default:
       return <p {...attributes}>{children}</p>;
@@ -219,27 +219,27 @@ const Mention = ({ attributes, children, element }) => {
   const selected = useSelected();
   const focused = useFocused();
   const style: React.CSSProperties = {
-    padding: '3px 3px 2px',
-    margin: '0 1px',
-    verticalAlign: 'baseline',
-    display: 'inline-block',
-    borderRadius: '4px',
-    backgroundColor: '#eee',
-    fontSize: '0.9em',
-    boxShadow: selected && focused ? '0 0 0 2px #B4D5FF' : 'none',
+    padding: "3px 3px 2px",
+    margin: "0 1px",
+    verticalAlign: "baseline",
+    display: "inline-block",
+    borderRadius: "4px",
+    backgroundColor: "#eee",
+    fontSize: "0.9em",
+    boxShadow: selected && focused ? "0 0 0 2px #B4D5FF" : "none",
   };
   // See if our empty text child has any styling marks applied and apply those
   if (element.children[0].bold) {
-    style.fontWeight = 'bold';
+    style.fontWeight = "bold";
   }
   if (element.children[0].italic) {
-    style.fontStyle = 'italic';
+    style.fontStyle = "italic";
   }
   return (
     <span
       {...attributes}
       contentEditable={false}
-      data-cy={`mention-${element.character.replace(' ', '-')}`}
+      data-cy={`mention-${element.character.replace(" ", "-")}`}
       style={style}
     >
       {element.character}
@@ -250,250 +250,100 @@ const Mention = ({ attributes, children, element }) => {
 
 const initialValue: Descendant[] = [
   {
-    type: 'paragraph',
+    type: "paragraph",
     children: [
       {
-        text: 'This example shows how you might implement a simple ',
+        text: "This example shows how you might implement a simple ",
       },
     ],
   },
 ];
 
-const CHARACTERS = [
-  'abort',
-  'action',
-  'add',
-  'after',
-  'all',
-  'alter',
-  'always',
-  'analyze',
-  'and',
-  'as',
-  'asc',
-  'attach',
-  'autoincrement',
-  'before',
-  'begin',
-  'between',
-  'by',
-  'cascade',
-  'case',
-  'cast',
-  'check',
-  'collate',
-  'column',
-  'commit',
-  'conflict',
-  'constraint',
-  'create',
-  'cross',
-  'current',
-  'current_date',
-  'current_time',
-  'current_timestamp',
-  'database',
-  'default',
-  'deferrable',
-  'deferred',
-  'delete',
-  'desc',
-  'detach',
-  'distinct',
-  'do',
-  'drop',
-  'each',
-  'else',
-  'end',
-  'escape',
-  'except',
-  'exclude',
-  'exclusive',
-  'exists',
-  'explain',
-  'fail',
-  'filter',
-  'first',
-  'following',
-  'for',
-  'foreign',
-  'from',
-  'full',
-  'generated',
-  'glob',
-  'group',
-  'groups',
-  'having',
-  'if',
-  'ignore',
-  'immediate',
-  'in',
-  'index',
-  'indexed',
-  'initially',
-  'inner',
-  'insert',
-  'instead',
-  'intersect',
-  'into',
-  'is',
-  'isnull',
-  'join',
-  'key',
-  'last',
-  'left',
-  'like',
-  'limit',
-  'match',
-  'materialized',
-  'natural',
-  'no',
-  'not',
-  'nothing',
-  'notnull',
-  'null',
-  'nulls',
-  'of',
-  'offset',
-  'on',
-  'or',
-  'order',
-  'others',
-  'outer',
-  'over',
-  'partition',
-  'plan',
-  'pragma',
-  'preceding',
-  'primary',
-  'query',
-  'raise',
-  'range',
-  'recursive',
-  'references',
-  'regexp',
-  'reindex',
-  'release',
-  'rename',
-  'replace',
-  'restrict',
-  'returning',
-  'right',
-  'rollback',
-  'row',
-  'rows',
-  'savepoint',
-  'select',
-  'set',
-  'table',
-  'temp',
-  'temporary',
-  'then',
-  'ties',
-  'to',
-  'transaction',
-  'trigger',
-  'unbounded',
-  'union',
-  'unique',
-  'update',
-  'using',
-  'vacuum',
-  'values',
-  'view',
-  'virtual',
-  'when',
-  'where',
-  'window',
-  'with',
-  'without',
-];
-
 export default MentionExample;
 
 export const Portal = ({ children }: { children?: ReactNode }) => {
-  return typeof document === 'object'
+  return typeof document === "object"
     ? createPortal(children, document.body)
     : null;
 };
 
 export type BlockQuoteElement = {
-  type: 'block-quote';
+  type: "block-quote";
   align?: string;
   children: Descendant[];
 };
 
 export type BulletedListElement = {
-  type: 'bulleted-list';
+  type: "bulleted-list";
   align?: string;
   children: Descendant[];
 };
 
 export type CheckListItemElement = {
-  type: 'check-list-item';
+  type: "check-list-item";
   checked: boolean;
   children: Descendant[];
 };
 
 export type EditableVoidElement = {
-  type: 'editable-void';
+  type: "editable-void";
   children: EmptyText[];
 };
 
 export type HeadingElement = {
-  type: 'heading';
+  type: "heading";
   align?: string;
   children: Descendant[];
 };
 
 export type HeadingTwoElement = {
-  type: 'heading-two';
+  type: "heading-two";
   align?: string;
   children: Descendant[];
 };
 
 export type ImageElement = {
-  type: 'image';
+  type: "image";
   url: string;
   children: EmptyText[];
 };
 
-export type LinkElement = { type: 'link'; url: string; children: Descendant[] };
+export type LinkElement = { type: "link"; url: string; children: Descendant[] };
 
-export type ButtonElement = { type: 'button'; children: Descendant[] };
+export type ButtonElement = { type: "button"; children: Descendant[] };
 
-export type BadgeElement = { type: 'badge'; children: Descendant[] };
+export type BadgeElement = { type: "badge"; children: Descendant[] };
 
-export type ListItemElement = { type: 'list-item'; children: Descendant[] };
+export type ListItemElement = { type: "list-item"; children: Descendant[] };
 
 export type MentionElement = {
-  type: 'mention';
+  type: "mention";
   character: string;
   children: CustomText[];
 };
 
 export type ParagraphElement = {
-  type: 'paragraph';
+  type: "paragraph";
   align?: string;
   children: Descendant[];
 };
 
-export type TitleElement = { type: 'title'; children: Descendant[] };
+export type TitleElement = { type: "title"; children: Descendant[] };
 
 export type VideoElement = {
-  type: 'video';
+  type: "video";
   url: string;
   children: EmptyText[];
 };
 
 export type CodeBlockElement = {
-  type: 'code-block';
+  type: "code-block";
   language: string;
   children: Descendant[];
 };
 
 export type CodeLineElement = {
-  type: 'code-line';
+  type: "code-line";
   children: Descendant[];
 };
 
@@ -533,7 +383,7 @@ export type CustomEditor = BaseEditor &
     nodeToDecorations?: Map<Element, Range[]>;
   };
 
-declare module 'slate' {
+declare module "slate" {
   interface CustomTypes {
     Editor: CustomEditor;
     Element: CustomElement;
