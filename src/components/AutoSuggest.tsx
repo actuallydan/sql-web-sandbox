@@ -14,6 +14,17 @@ export default function AutoSuggest({
   if (!coords) {
     return null;
   }
+  let dynamicPositionStyle = {
+    margin: "1rem 0 0 10rem",
+    top: coords?.y,
+    left: coords?.x,
+  };
+  // if the auto suggest would clip below the bottom of the window, subtract the height of the autosuggest from the top position
+
+  if (coords.y + results.length * 32 > window.innerHeight) {
+    dynamicPositionStyle.top = coords.y - 100;
+    dynamicPositionStyle.margin = `-${results.length - 1}rem 0 0 10rem`;
+  }
 
   const selectedClassName = "p-1 font-bold bg-blue-600";
   const defaultClassName = "p-1";
@@ -23,10 +34,8 @@ export default function AutoSuggest({
       className="bg-gray-600"
       style={{
         position: "absolute",
-        top: coords?.y,
-        left: coords?.x,
         width: "10rem",
-        margin: "1rem 0 0 10rem",
+        ...dynamicPositionStyle,
       }}
     >
       {results.map((k, i) => (
