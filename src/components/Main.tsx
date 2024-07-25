@@ -10,6 +10,7 @@ import type { Database } from "@sqlite.org/sqlite-wasm";
 import { initializeSQLite, keywords } from "../utils/sqlite";
 import { ulid } from "ulidx";
 import { getCaretCoordinates } from "@/utils/textarea";
+import AutoSuggest from "./AutoSuggest";
 
 type Command = {
   text: string;
@@ -35,7 +36,8 @@ type TableColumn = {
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
-
+  const [selectedAutoSuggestIndex, setSelectedAutoSuggestIndex] = useState(0);
+  const [matchingKeywords, setMatchingKeywords] = useState<string[]>([]);
   const [commands, setCommands] = useState<Command[]>(
     []
     //   [
@@ -68,7 +70,60 @@ function App() {
   const [db, setDB] = useState<Database | null>(null);
   const [tables, setTables] = useState<TableSchema[]>([]);
 
+  const navigateKeywordsInAutoSuggest = (
+    event: KeyboardEvent<HTMLTextAreaElement>
+  ) => {
+    if (!matchingKeywords.length) {
+      return;
+    }
+
+    switch (event.key) {
+      case "Enter": {
+        if (event.shiftKey) {
+          return;
+        }
+        event.preventDefault();
+
+        // replace the last string in currentText with the match at the last index and add a space
+        const lastString = currentText.toLowerCase().match(/([a-zA-Z]+)$/);
+        const text = currentText.replace(
+          lastString?.[0] || "",
+          matchingKeywords[selectedAutoSuggestIndex] + " "
+        );
+        setCurrentText(text);
+
+        break;
+      }
+      case "ArrowUp": {
+        setSelectedAutoSuggestIndex((prev) => {
+          if (prev === 0) {
+            return matchingKeywords.length - 1;
+          }
+          return prev - 1;
+        });
+        break;
+      }
+      case "ArrowDown": {
+        setSelectedAutoSuggestIndex((prev) => {
+          if (prev === matchingKeywords.length - 1) {
+            return 0;
+          }
+          return prev + 1;
+        });
+        break;
+      }
+      case "Escape": {
+        setMatchingKeywords([]);
+        setSelectedAutoSuggestIndex(0);
+        break;
+      }
+    }
+  };
   const handleKeyPress = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (matchingKeywords.length > 0) {
+      navigateKeywordsInAutoSuggest(event);
+      return;
+    }
     switch (event.key) {
       case "Enter": {
         if (event.shiftKey) {
@@ -259,15 +314,21 @@ function App() {
     }
   }, [commandCursor]);
 
-  const lastString = currentText.toLowerCase().match(/([a-zA-Z]+)$/);
+  useEffect(() => {
+    if (currentText && coords) {
+      const lastString = currentText.toLowerCase().match(/([a-zA-Z]+)$/);
 
-  let matchingKeywords: string[] = [];
+      let matches: string[] = [];
 
-  if (lastString?.[0]) {
-    matchingKeywords = keywords
-      .filter((k) => k.includes(lastString[0]))
-      .slice(0, 5);
-  }
+      if (lastString?.[0]) {
+        matches = keywords.filter((k) => k.includes(lastString[0])).slice(0, 5);
+      }
+
+      setMatchingKeywords(matches);
+    }
+
+    setSelectedAutoSuggestIndex(0);
+  }, [currentText, coords]);
 
   return (
     <div id="root">
@@ -362,24 +423,11 @@ function App() {
           }}
           placeholder="enter SQL commands..."
         />
-        {coords ? (
-          <div
-            className="bg-gray-600"
-            style={{
-              position: "absolute",
-              top: coords?.y,
-              left: coords?.x,
-              width: "10rem",
-              margin: "1rem 0 0 10rem",
-            }}
-          >
-            {matchingKeywords.map((k) => (
-              <div key={k} className="p-1">
-                {k}
-              </div>
-            ))}
-          </div>
-        ) : null}
+        <AutoSuggest
+          coords={coords}
+          results={matchingKeywords}
+          selectedIndex={selectedAutoSuggestIndex}
+        />
       </div>
     </div>
   );

@@ -53,6 +53,7 @@ export const keywords = [
   "collate",
   "column",
   "commit",
+  "count",
   "conflict",
   "constraint",
   "create",
