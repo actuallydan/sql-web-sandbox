@@ -382,7 +382,10 @@ function App() {
                 undefined
               );
 
-              setCoords({ x: coords.left, y: coords.top + elementPos.top });
+              setCoords({
+                x: coords.left,
+                y: coords.top + event.target.offsetTop,
+              });
             } else {
               setCoords(null);
             }

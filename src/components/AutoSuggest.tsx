@@ -21,9 +21,11 @@ export default function AutoSuggest({
   };
   // if the auto suggest would clip below the bottom of the window, subtract the height of the autosuggest from the top position
 
-  if (coords.y + results.length * 32 > window.innerHeight) {
-    dynamicPositionStyle.top = coords.y - 100;
-    dynamicPositionStyle.margin = `-${results.length - 1}rem 0 0 10rem`;
+  const resultsHeight = results.length * 32;
+
+  if (coords.y + resultsHeight > window.innerHeight) {
+    dynamicPositionStyle.top = coords.y - resultsHeight;
+    dynamicPositionStyle.margin = `-1rem 0 0 10rem`;
   }
 
   const selectedClassName = "p-1 font-bold bg-blue-600";
