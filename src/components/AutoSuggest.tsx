@@ -14,8 +14,9 @@ export default function AutoSuggest({
   if (!coords) {
     return null;
   }
+  // TODO: margin right is equal to the sidebar width, set this with global state
   let dynamicPositionStyle = {
-    margin: "1rem 0 0 10rem",
+    margin: "1rem 0 0 13rem",
     top: coords?.y,
     left: coords?.x,
   };

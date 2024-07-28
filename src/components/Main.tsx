@@ -373,8 +373,11 @@ function App() {
           autoFocus
           tabIndex={0}
           onKeyDown={handleKeyPress}
-          className="currCommand"
+          className="currCommand box-content leading-5"
           value={currentText}
+          style={{
+            height: (currentText.split(/\n/g).length || 1) * 1.25 + "rem",
+          }}
           onChange={(event) => {
             const lastString = event.target.value.match(/([a-zA-Z]+)$/);
 
