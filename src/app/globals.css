@@ -69,7 +69,7 @@ button:focus-visible {
   flex-grow: 1;
 }
 .sidebar {
-  width: 10rem;
+  width: 13rem;
   /* position: fixed; */
   padding: 0.5rem;
   font-family: monospace;
@@ -88,6 +88,9 @@ button:focus-visible {
   }
 }
 
+.prevCommandWrapper {
+  border-bottom: 1px solid #444444;
+}
 .prevCommand {
   width: 100%;
   font-family: monospace;

@@ -9,6 +9,7 @@ export type Command = {
 export type TableSchema = {
   name: string;
   columns: TableColumn[];
+  rowCount: number;
 };
 
 export type TableColumn = {

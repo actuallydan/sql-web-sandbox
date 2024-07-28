@@ -219,6 +219,7 @@ function App() {
         }
         return newCommands;
       });
+
       const latestTables = API.getTables(db);
 
       const latestIndexedSchema = API.indexSchema(latestTables);
@@ -305,7 +306,12 @@ function App() {
         <h4>tables</h4>
         {tables.map((t) => (
           <div className="sidebar-table-wrapper" key={t.name}>
-            <p>{t.name}</p>
+            <p>
+              {t.name}{" "}
+              <span className="text-gray-400 text-[0.65rem]">
+                {t.rowCount} row(s)
+              </span>
+            </p>
             <ul>
               {t.columns.map((c: TableColumn) => (
                 <li key={c.name}>
@@ -327,7 +333,7 @@ function App() {
               : "prevCommand";
 
           return (
-            <div key={command.id}>
+            <div key={command.id} className="prevCommandWrapper">
               <div className={commandClass}>
                 <div className="timestampText">
                   {command.time.toLocaleTimeString()}

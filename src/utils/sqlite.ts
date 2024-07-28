@@ -47,10 +47,16 @@ export const API = {
           rowMode: "object",
         }) as unknown as TableColumn[];
 
+        const length = db.exec({
+          sql: `SELECT count(*) FROM ${table.name};`,
+          rowMode: "object",
+        }) as unknown as [{ "count(*)": number }];
+
         return {
           name: table.name,
           columns,
-        } as TableSchema;
+          rowCount: length[0]["count(*)"],
+        };
       });
 
       return tables;
