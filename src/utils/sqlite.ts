@@ -230,3 +230,11 @@ export const keywords = [
   "with",
   "without",
 ];
+
+export const keywordsMap = keywords.reduce(
+  (agg: Record<string, string>, it: string) => {
+    agg[it] = it;
+    return agg;
+  },
+  {}
+);

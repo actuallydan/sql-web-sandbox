@@ -1,5 +1,5 @@
 import type { MouseEvent, KeyboardEvent } from "react";
-
+import { keywordsMap } from "@/utils/sqlite";
 import { Command } from "@/types/sql";
 
 type CommandResultProps = {
@@ -35,7 +35,7 @@ export default function CommandResult({
           onClick={selectCommand}
           onKeyDown={handleKeyPressForPrevCommand}
         >
-          {command.text}
+          <SyntaxHighlightText>{command.text}</SyntaxHighlightText>
         </div>
         <div className="rerunSection">
           <button
@@ -65,3 +65,23 @@ export default function CommandResult({
     </div>
   );
 }
+
+const SyntaxHighlightText = ({ children }: { children: string }) => {
+  const textArr = children.split(" ");
+
+  return (
+    <span>
+      {textArr.map((str, index) => {
+        if (keywordsMap[str.toLowerCase()]) {
+          return (
+            <span key={`${str}-${index}`} className="text-blue-400">
+              {str}{" "}
+            </span>
+          );
+        }
+
+        return <span key={`${str}-${index}`}>{str} </span>;
+      })}
+    </span>
+  );
+};
