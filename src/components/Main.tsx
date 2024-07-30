@@ -27,7 +27,7 @@ function App() {
     [
       {
         time: new Date("2024-06-26T17:18:32.163Z"),
-        text: "create table users (name text);",
+        text: "create table users (id integer primary key, name text);",
         id: "01J1ARWQPD1A0S7CHEXFT21CMM",
         output: [],
       },
@@ -344,9 +344,19 @@ function App() {
             <ul>
               {t.columns.map((c: TableColumn) => (
                 <li key={c.name}>
-                  <span className="text-gray-400">└</span>
+                  <span className="text-gray-500">└</span>
                   <span className="italic">{c.name}</span>
-                  <span className="text-sm">{c.type}</span>
+                  <span className="text-sm">
+                    {c.type}
+                    {c.pk ? (
+                      <span
+                        className="text-[1rem] text-[#ffdd00] ml-1 cursor-pointer"
+                        title="primary key"
+                      >
+                        ★
+                      </span>
+                    ) : null}
+                  </span>
                 </li>
               ))}
             </ul>
