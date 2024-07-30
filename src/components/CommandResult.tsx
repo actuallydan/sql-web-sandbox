@@ -115,19 +115,19 @@ export default function CommandResult({
             <div>
               <button
                 onMouseDown={exportToJSON}
-                className="text-[0.5rem] transition text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
+                className="text-[0.5rem] text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
               >
                 Export to JSON
               </button>
               <button
                 onMouseDown={exportToCSV}
-                className="text-[0.5rem] transition text-gray-500 hover:text-green-400 cursor-pointer border-transparent border hover:border-green-400 rounded-sm  p-1"
+                className="text-[0.5rem] text-gray-500 hover:text-green-400 cursor-pointer border-transparent border hover:border-green-400 rounded-sm  p-1"
               >
                 Export to CSV
               </button>
               <button
                 onMouseDown={copyQueryToClipboard}
-                className="text-[0.5rem] transition text-gray-500 hover:text-purple-400 cursor-pointer border-transparent border hover:border-purple-400 rounded-sm  p-1"
+                className="text-[0.5rem] text-gray-500 hover:text-purple-400 cursor-pointer border-transparent border hover:border-purple-400 rounded-sm  p-1"
               >
                 Copy Query
               </button>
