@@ -76,7 +76,8 @@ button:focus-visible {
 }
 .terminal {
   /* flex-grow: 1; */
-  width: calc(100dvw - 13rem);
+  /* width: calc(100dvw - 12rem); */
+  /* overflow-x: hidden; */
 }
 
 .sidebar-table-wrapper {

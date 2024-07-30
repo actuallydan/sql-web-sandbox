@@ -239,6 +239,11 @@ function App() {
         }
         return newCommands;
       });
+    } finally {
+      const textarea = document.getElementById("terminalTextarea");
+      if (textarea) {
+        textarea.scrollIntoView();
+      }
     }
   };
 
@@ -300,11 +305,14 @@ function App() {
     setSelectedAutoSuggestIndex(0);
   }, [currentText, coords]);
 
-  const sideBarWidthInRems = 13;
+  const sideBarWidthInRems = 12;
 
   return (
     <div id="root">
-      <div className="sidebar" style={{ width: `${sideBarWidthInRems}rem` }}>
+      <div
+        className="sidebar box-content"
+        style={{ width: `${sideBarWidthInRems}rem` }}
+      >
         <h4>tables</h4>
         {tables.map((t) => (
           <div className="sidebar-table-wrapper" key={t.name}>
@@ -327,8 +335,11 @@ function App() {
         ))}
       </div>
       <div
-        className="terminal"
-        style={{ marginLeft: `${sideBarWidthInRems}rem` }}
+        className="terminal box-content"
+        style={{
+          marginLeft: `${sideBarWidthInRems + 1}rem`,
+          width: `calc(100dvw - ${sideBarWidthInRems + 1}rem)`,
+        }}
       >
         {/* output */}
         {commands.map((command, index) => {
@@ -378,11 +389,13 @@ function App() {
           autoFocus
           tabIndex={0}
           onKeyDown={handleKeyPress}
-          className="currCommand box-content leading-5"
+          className="currCommand box-border leading-5 py-2"
           value={currentText}
           style={{
-            height: (currentText.split(/\n/g).length || 1) * 1.25 + "rem",
+            height: `${(currentText.split(/\n/g).length || 1) * 1.25 + 1}rem`,
+            width: `calc(100dvw - ${sideBarWidthInRems + 1}rem)`,
           }}
+          id="terminalTextarea"
           onChange={(event) => {
             const lastString = event.target.value.match(/([a-zA-Z]+)$/);
 
