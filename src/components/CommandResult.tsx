@@ -25,6 +25,62 @@ export default function CommandResult({
     reRunCommand(command);
   };
 
+  const exportToJSON = () => {
+    const { output } = command;
+
+    if (!output) {
+      return;
+    }
+
+    const data = JSON.stringify(output, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = command.id + "-data.json";
+
+    a.click();
+
+    a.remove();
+  };
+
+  const exportToCSV = () => {
+    const { output } = command;
+
+    if (!output) {
+      return;
+    }
+
+    let csvString = "";
+
+    if (output.length === 0) {
+      return;
+    }
+
+    const headers = Object.keys(output[0]);
+
+    csvString += headers.join(",") + "\n";
+
+    for (let i = 0; i < output.length; i++) {
+      const row = Object.values(output[i]);
+      csvString += row.join(",") + "\n";
+    }
+
+    const blob = new Blob([csvString], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = command.id + "-data.csv";
+
+    a.click();
+
+    a.remove();
+  };
+
+  const copyQueryToClipboard = () => {
+    navigator.clipboard.writeText(command.text);
+  };
+
   return (
     <div className="prevCommandWrapper">
       <div className={commandClass}>
@@ -55,6 +111,28 @@ export default function CommandResult({
           <pre className="resultBlock">
             {JSON.stringify(command.output, null, 2)}
           </pre>
+          {command.output ? (
+            <div>
+              <button
+                onMouseDown={exportToJSON}
+                className="text-[0.5rem] transition text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
+              >
+                Export to JSON
+              </button>
+              <button
+                onMouseDown={exportToCSV}
+                className="text-[0.5rem] transition text-gray-500 hover:text-green-400 cursor-pointer border-transparent border hover:border-green-400 rounded-sm  p-1"
+              >
+                Export to CSV
+              </button>
+              <button
+                onMouseDown={copyQueryToClipboard}
+                className="text-[0.5rem] transition text-gray-500 hover:text-purple-400 cursor-pointer border-transparent border hover:border-purple-400 rounded-sm  p-1"
+              >
+                Copy Query
+              </button>
+            </div>
+          ) : null}
         </div>
       ) : null}
       {command.error ? (
