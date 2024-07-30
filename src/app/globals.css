@@ -138,7 +138,11 @@ button:focus-visible {
   background-color: #444444;
 
   position: sticky;
-  bottom: 0;
+  bottom: 1px;
+}
+
+.currCommand:focus {
+  outline: 1px solid #ffdd00;
 }
 
 .resultBlock {
