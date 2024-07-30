@@ -12,6 +12,7 @@ import { ulid } from "ulidx";
 import { getCaretCoordinates } from "@/utils/textarea";
 import AutoSuggest from "./AutoSuggest";
 import type { TableColumn, TableSchema, Command } from "@/types/sql";
+import CommandResult from "./CommandResult";
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
@@ -161,6 +162,24 @@ function App() {
         break;
       }
     }
+  };
+
+  const reRunCommand = (command: Command) => {
+    const text = command.text.trim();
+
+    const newId = ulid();
+
+    setCommands((prevEvents) => {
+      const newCommand = {
+        time: new Date(),
+        text,
+        id: newId,
+      };
+
+      return [...prevEvents, newCommand];
+    });
+
+    executeQuery(text, newId);
   };
 
   const handleKeyPressForPrevCommand = (
@@ -343,45 +362,16 @@ function App() {
       >
         {/* output */}
         {commands.map((command, index) => {
-          const commandClass =
-            index === commandCursor
-              ? "prevCommand activeCommand"
-              : "prevCommand";
-
           return (
-            <div key={command.id} className="prevCommandWrapper">
-              <div className={commandClass}>
-                <div className="timestampText">
-                  {command.time.toLocaleTimeString()}
-                </div>
-                <div
-                  className="commandText"
-                  data-index={index}
-                  onClick={selectCommand}
-                  onKeyDown={handleKeyPressForPrevCommand}
-                >
-                  {command.text}
-                </div>
-                <div className="rerunSection">
-                  <button className="runCommandBtn">»</button>
-                </div>
-              </div>
-              {command.output ? (
-                <div>
-                  <p className="text-xs text-gray-300 p-1">
-                    {command.output.length} row(s) returned{" "}
-                  </p>
-                  <pre className="resultBlock">
-                    {JSON.stringify(command.output, null, 2)}
-                  </pre>
-                </div>
-              ) : null}
-              {command.error ? (
-                <pre className="w-full bg-red-800 text-red errBlock">
-                  {command.error}
-                </pre>
-              ) : null}
-            </div>
+            <CommandResult
+              key={command.id}
+              command={command}
+              isActive={index === commandCursor}
+              index={index}
+              selectCommand={selectCommand}
+              handleKeyPressForPrevCommand={handleKeyPressForPrevCommand}
+              reRunCommand={reRunCommand}
+            />
           );
         })}
 
