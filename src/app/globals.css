@@ -65,17 +65,18 @@ button:focus-visible {
   display: flex;
   flex-direction: row;
 }
-.terminal {
-  /* flex-grow: 1; */
-  width: calc(100dvw - 13rem);
-}
 .sidebar {
-  width: 13rem;
-  /* position: fixed; */
+  position: fixed;
   padding: 0.5rem;
   font-family: monospace;
   max-height: 100dvh;
   overflow-y: scroll;
+  height: 100dvh;
+  background: #111;
+}
+.terminal {
+  /* flex-grow: 1; */
+  width: calc(100dvw - 13rem);
 }
 
 .sidebar-table-wrapper {

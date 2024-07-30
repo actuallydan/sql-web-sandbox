@@ -300,9 +300,11 @@ function App() {
     setSelectedAutoSuggestIndex(0);
   }, [currentText, coords]);
 
+  const sideBarWidthInRems = 13;
+
   return (
     <div id="root">
-      <div className="sidebar">
+      <div className="sidebar" style={{ width: `${sideBarWidthInRems}rem` }}>
         <h4>tables</h4>
         {tables.map((t) => (
           <div className="sidebar-table-wrapper" key={t.name}>
@@ -324,7 +326,10 @@ function App() {
           </div>
         ))}
       </div>
-      <div className="terminal">
+      <div
+        className="terminal"
+        style={{ marginLeft: `${sideBarWidthInRems}rem` }}
+      >
         {/* output */}
         {commands.map((command, index) => {
           const commandClass =
