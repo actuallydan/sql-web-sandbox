@@ -338,8 +338,8 @@ function App() {
 
   // On top layout
   const onResize = (
-    event: React.SyntheticEvent<Element, Event>,
-    { node, size, handle }: ResizeCallbackData
+    _: React.SyntheticEvent<Element, Event>,
+    { size }: ResizeCallbackData
   ) => {
     setSideBarWidthInPixels(size.width);
   };
