@@ -5,18 +5,22 @@ type AutoSuggestProps = {
   } | null;
   results: string[];
   selectedIndex: number | null;
+  marginLeft: number;
 };
+
 export default function AutoSuggest({
   coords,
   results,
   selectedIndex = 0,
+  marginLeft,
 }: AutoSuggestProps) {
   if (!coords) {
     return null;
   }
-  // TODO: margin right is equal to the sidebar width, set this with global state
+
   let dynamicPositionStyle = {
-    margin: "1rem 0 0 13rem",
+    margin: `1rem 0 0 ${marginLeft}px`,
+    marginLeft: `calc(${marginLeft}px + 0.75rem)`,
     top: coords?.y,
     left: coords?.x,
   };
@@ -26,7 +30,8 @@ export default function AutoSuggest({
 
   if (coords.y + resultsHeight > window.innerHeight) {
     dynamicPositionStyle.top = coords.y - resultsHeight;
-    dynamicPositionStyle.margin = `-1rem 0 0 10rem`;
+    dynamicPositionStyle.margin = `-1rem 0 0 ${marginLeft}px`;
+    dynamicPositionStyle.marginLeft = `calc(${marginLeft}px + 0.75rem)`;
   }
 
   const selectedClassName = "p-1 font-bold bg-blue-600";

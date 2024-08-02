@@ -13,6 +13,15 @@ import { getCaretCoordinates } from "@/utils/textarea";
 import AutoSuggest from "./AutoSuggest";
 import type { TableColumn, TableSchema, Command } from "@/types/sql";
 import CommandResult from "./CommandResult";
+import { ResizableBox } from "react-resizable";
+import SidebarResizeHandle from "@/components/SidebarResizeHandle";
+
+type ResizeCallbackData = {
+  node: HTMLElement;
+  size: { width: number; height: number };
+  handle: ResizeHandleAxis;
+};
+type ResizeHandleAxis = "s" | "w" | "e" | "n" | "sw" | "nw" | "se" | "ne";
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
@@ -53,6 +62,9 @@ function App() {
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
   const [db, setDB] = useState<Database | null>(null);
   const [tables, setTables] = useState<TableSchema[]>([]);
+
+  const [windowResizeActive, setWindowResizeActive] = useState(false);
+  const [sideBarWidthInPixels, setSideBarWidthInPixels] = useState(200);
 
   const navigateKeywordsInAutoSuggest = (
     event: KeyboardEvent<HTMLTextAreaElement>
@@ -324,53 +336,69 @@ function App() {
     setSelectedAutoSuggestIndex(0);
   }, [currentText, coords]);
 
-  const sideBarWidthInRems = 12;
+  // On top layout
+  const onResize = (
+    event: React.SyntheticEvent<Element, Event>,
+    { node, size, handle }: ResizeCallbackData
+  ) => {
+    setSideBarWidthInPixels(size.width);
+  };
 
   return (
     <div id="root">
-      <div
-        className="sidebar box-content"
-        style={{ width: `${sideBarWidthInRems}rem` }}
+      <ResizableBox
+        width={sideBarWidthInPixels}
+        height={window.innerHeight}
+        onResize={onResize}
+        handle={
+          <SidebarResizeHandle sideBarWidthInPixels={sideBarWidthInPixels} />
+        }
       >
-        <h4>tables</h4>
-        {tables.map((t) => (
-          <div className="sidebar-table-wrapper" key={t.name}>
-            <p>
-              {t.name}{" "}
-              <span className="text-gray-400 text-[0.65rem]">
-                {t.rowCount} row(s)
-              </span>
-            </p>
-            <ul>
-              {t.columns.map((c: TableColumn) => (
-                <li key={c.name}>
-                  <span className="text-gray-500">└</span>
-                  <span className="italic">{c.name}</span>
-                  <span className="text-sm">
-                    {c.type}
-                    {c.pk ? (
-                      <span
-                        className="text-[1rem] text-[#ffdd00] ml-1 cursor-pointer"
-                        title="primary key"
-                      >
-                        ★
-                      </span>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-      </div>
+        <div
+          className="sidebar box-content"
+          style={{ width: `${sideBarWidthInPixels}px` }}
+        >
+          <h3 className="font-extrabold text-gray-800 rounded bg-gray-400 w-min px-1 text-sm">
+            tables
+          </h3>
+          {tables.map((t) => (
+            <div className="sidebar-table-wrapper" key={t.name}>
+              <p>
+                {t.name}{" "}
+                <span className="text-gray-400 text-[0.65rem]">
+                  {t.rowCount} row(s)
+                </span>
+              </p>
+              <ul>
+                {t.columns.map((c: TableColumn) => (
+                  <li key={c.name}>
+                    <span className="text-gray-500">└</span>
+                    <span className="italic">{c.name}</span>
+                    <span className="text-sm">
+                      {c.type}
+                      {c.pk ? (
+                        <span
+                          className="text-[1rem] text-[#ffdd00] ml-1 cursor-pointer"
+                          title="primary key"
+                        >
+                          ★
+                        </span>
+                      ) : null}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </ResizableBox>
       <div
         className="terminal box-content"
         style={{
-          marginLeft: `${sideBarWidthInRems + 1}rem`,
-          width: `calc(100dvw - ${sideBarWidthInRems + 1}rem)`,
+          marginLeft: `calc(${sideBarWidthInPixels}px + 1rem )`,
+          width: `calc(100dvw - ${sideBarWidthInPixels}px - 1rem)`,
         }}
       >
-        {/* output */}
         {commands.map((command, index) => {
           return (
             <CommandResult
@@ -393,25 +421,23 @@ function App() {
           value={currentText}
           style={{
             height: `${(currentText.split(/\n/g).length || 1) * 1.25 + 1}rem`,
-            width: `calc(100dvw - ${sideBarWidthInRems + 1}rem)`,
+            width: `calc(100dvw - ${sideBarWidthInPixels}px - 1rem)`,
           }}
           id="terminalTextarea"
           onChange={(event) => {
             const lastString = event.target.value.match(/([a-zA-Z]+)$/);
 
-            const elementPos = event.target.getBoundingClientRect();
-
             if (lastString?.[0]) {
               const element = event.target;
-              const coords = getCaretCoordinates(
+              const caretCoords = getCaretCoordinates(
                 element,
                 element.selectionEnd - lastString[0].length,
                 undefined
               );
 
               setCoords({
-                x: coords.left,
-                y: coords.top + event.target.offsetTop,
+                x: caretCoords.left,
+                y: caretCoords.top + event.target.offsetTop,
               });
             } else {
               setCoords(null);
@@ -426,6 +452,7 @@ function App() {
           coords={coords}
           results={matchingKeywords}
           selectedIndex={selectedAutoSuggestIndex}
+          marginLeft={sideBarWidthInPixels}
         />
       </div>
     </div>
