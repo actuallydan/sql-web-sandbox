@@ -86,7 +86,7 @@ export default function CommandResult({
       <div className={commandClass}>
         <div className="timestampText">{command.time.toLocaleTimeString()}</div>
         <div
-          className="commandText"
+          className="commandText whitespace-pre-wrap"
           data-index={index}
           onClick={selectCommand}
           onKeyDown={handleKeyPressForPrevCommand}
