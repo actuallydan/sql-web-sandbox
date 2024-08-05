@@ -1,6 +1,8 @@
 import type { MouseEvent, KeyboardEvent } from "react";
 import { keywordsMap } from "@/utils/sqlite";
 import { Command } from "@/types/sql";
+import { themeAtom } from "@/state";
+import { useAtom } from "jotai";
 
 type CommandResultProps = {
   command: Command;
@@ -19,6 +21,7 @@ export default function CommandResult({
   handleKeyPressForPrevCommand,
   reRunCommand,
 }: CommandResultProps) {
+  const [theme] = useAtom(themeAtom);
   const commandClass = isActive ? "prevCommand activeCommand" : "prevCommand";
 
   const _reRunCommand = (ev: MouseEvent<HTMLButtonElement>) => {
@@ -136,7 +139,10 @@ export default function CommandResult({
         </div>
       ) : null}
       {command.error ? (
-        <pre className="w-full bg-red-800 text-red errBlock">
+        <pre
+          className="w-full bg-red-800 text-red errBlock"
+          style={{ background: theme.error }}
+        >
           {command.error}
         </pre>
       ) : null}
@@ -146,13 +152,17 @@ export default function CommandResult({
 
 const SyntaxHighlightText = ({ children }: { children: string }) => {
   const textArr = children.split(" ");
+  const [theme] = useAtom(themeAtom);
 
   return (
     <span>
       {textArr.map((str, index) => {
         if (keywordsMap[str.toLowerCase()]) {
           return (
-            <span key={`${str}-${index}`} className="text-blue-400">
+            <span
+              key={`${str}-${index}`}
+              style={{ color: theme.syntaxHighlightMain }}
+            >
               {str}{" "}
             </span>
           );

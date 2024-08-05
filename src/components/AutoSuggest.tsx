@@ -1,3 +1,7 @@
+import { sideBarWidthAtom, themeAtom } from "@/state";
+
+import { useAtom } from "jotai";
+
 type AutoSuggestProps = {
   coords: {
     x: number;
@@ -5,15 +9,16 @@ type AutoSuggestProps = {
   } | null;
   results: string[];
   selectedIndex: number | null;
-  marginLeft: number;
 };
 
 export default function AutoSuggest({
   coords,
   results,
   selectedIndex = 0,
-  marginLeft,
 }: AutoSuggestProps) {
+  const [marginLeft] = useAtom(sideBarWidthAtom);
+  const [theme] = useAtom(themeAtom);
+
   if (!coords) {
     return null;
   }
@@ -24,8 +29,8 @@ export default function AutoSuggest({
     top: coords?.y,
     left: coords?.x,
   };
-  // if the auto suggest would clip below the bottom of the window, subtract the height of the autosuggest from the top position
 
+  // if the auto suggest would clip below the bottom of the window, subtract the height of the autosuggest from the top position
   const resultsHeight = results.length * 32;
 
   if (coords.y + resultsHeight > window.innerHeight) {
@@ -34,15 +39,15 @@ export default function AutoSuggest({
     dynamicPositionStyle.marginLeft = `calc(${marginLeft}px + 0.75rem)`;
   }
 
-  const selectedClassName = "p-1 font-bold bg-blue-600";
-  const defaultClassName = "p-1";
+  const selectedClassName = "p-1 font-bold font-mono bg-blue-600";
+  const defaultClassName = "p-1 font-mono ";
 
   return (
     <div
-      className="bg-gray-600"
       style={{
         position: "absolute",
         width: "10rem",
+        backgroundColor: theme.sidebar,
         ...dynamicPositionStyle,
       }}
     >
@@ -50,6 +55,10 @@ export default function AutoSuggest({
         <div
           key={k}
           className={selectedIndex === i ? selectedClassName : defaultClassName}
+          style={{
+            backgroundColor:
+              selectedIndex === i ? theme.autoSuggestHighlight : "initial",
+          }}
         >
           {k}
         </div>

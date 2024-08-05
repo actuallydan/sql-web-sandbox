@@ -15,13 +15,18 @@ import type { TableColumn, TableSchema, Command } from "@/types/sql";
 import CommandResult from "./CommandResult";
 import { ResizableBox } from "react-resizable";
 import SidebarResizeHandle from "@/components/SidebarResizeHandle";
+import { sideBarWidthAtom, themeAtom } from "@/state";
+import { useAtom } from "jotai";
 
 type ResizeCallbackData = {
   node: HTMLElement;
   size: { width: number; height: number };
   handle: ResizeHandleAxis;
 };
+
 type ResizeHandleAxis = "s" | "w" | "e" | "n" | "sw" | "nw" | "se" | "ne";
+
+const navItems = ["tables", "settings"] as const;
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
@@ -62,9 +67,13 @@ function App() {
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
   const [db, setDB] = useState<Database | null>(null);
   const [tables, setTables] = useState<TableSchema[]>([]);
-
+  const [theme] = useAtom(themeAtom);
   const [windowResizeActive, setWindowResizeActive] = useState(false);
-  const [sideBarWidthInPixels, setSideBarWidthInPixels] = useState(200);
+  const [sideBarWidthInPixels, setSideBarWidthInPixels] =
+    useAtom(sideBarWidthAtom);
+  const [selectedRoute, setSelectedRoute] = useState<(typeof navItems)[number]>(
+    navItems[0]
+  );
 
   const navigateKeywordsInAutoSuggest = (
     event: KeyboardEvent<HTMLTextAreaElement>
@@ -356,11 +365,34 @@ function App() {
       >
         <div
           className="sidebar box-content"
-          style={{ width: `${sideBarWidthInPixels}px` }}
+          style={{
+            width: `${sideBarWidthInPixels}px`,
+            backgroundColor: theme.sidebar,
+          }}
         >
-          <h3 className="font-extrabold text-gray-800 rounded bg-gray-400 w-min px-1 text-sm">
-            tables
-          </h3>
+          <nav className="flex">
+            {navItems.map((item) => (
+              <button
+                key={item}
+                onClick={() => {
+                  setSelectedRoute(item);
+                }}
+                className="font-extrabold text-gray-800 rounded bg-gray-400 w-min px-1 text-sm ml-2"
+                style={{
+                  backgroundColor:
+                    selectedRoute === item
+                      ? theme.sideBarTabActive
+                      : "transparent",
+                  color:
+                    selectedRoute === item
+                      ? theme.sidebar
+                      : theme.sideBarTabActive,
+                }}
+              >
+                {item}
+              </button>
+            ))}
+          </nav>
           {tables.map((t) => (
             <div className="sidebar-table-wrapper" key={t.name}>
               <p>
@@ -379,6 +411,7 @@ function App() {
                       {c.pk ? (
                         <span
                           className="text-[1rem] text-[#ffdd00] ml-1 cursor-pointer"
+                          style={{ color: theme.inputOutline }}
                           title="primary key"
                         >
                           ★
@@ -397,6 +430,7 @@ function App() {
         style={{
           marginLeft: `calc(${sideBarWidthInPixels}px + 1rem )`,
           width: `calc(100dvw - ${sideBarWidthInPixels}px - 1rem)`,
+          backgroundColor: theme.terminal,
         }}
       >
         {commands.map((command, index) => {
@@ -452,7 +486,6 @@ function App() {
           coords={coords}
           results={matchingKeywords}
           selectedIndex={selectedAutoSuggestIndex}
-          marginLeft={sideBarWidthInPixels}
         />
       </div>
     </div>

@@ -72,7 +72,6 @@ button:focus-visible {
   max-height: 100dvh;
   overflow-y: scroll;
   height: 100dvh;
-  background: #111;
 }
 .terminal {
   /* flex-grow: 1; */
