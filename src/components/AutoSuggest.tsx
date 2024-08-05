@@ -24,7 +24,9 @@ export default function AutoSuggest({
   }
 
   let dynamicPositionStyle = {
-    margin: `1rem 0 0 ${marginLeft}px`,
+    marginTop: `1rem`,
+    marginRight: "0",
+    marginBottom: "0",
     marginLeft: `calc(${marginLeft}px + 0.75rem)`,
     top: coords?.y,
     left: coords?.x,
@@ -35,8 +37,7 @@ export default function AutoSuggest({
 
   if (coords.y + resultsHeight > window.innerHeight) {
     dynamicPositionStyle.top = coords.y - resultsHeight;
-    dynamicPositionStyle.margin = `-1rem 0 0 ${marginLeft}px`;
-    dynamicPositionStyle.marginLeft = `calc(${marginLeft}px + 0.75rem)`;
+    dynamicPositionStyle.marginTop = `-1rem`;
   }
 
   const selectedClassName = "p-1 font-bold font-mono bg-blue-600";
