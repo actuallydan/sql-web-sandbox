@@ -385,6 +385,11 @@ function App() {
     setSideBarWidthInPixels(size.width);
   };
 
+  // for implementing typeahead
+  // const { x, y } = document
+  //   .getElementById("terminalTextarea")
+  //   ?.getBoundingClientRect() || { x: -100, y: -100 };
+
   return (
     <div id="root">
       <ResizableBox
@@ -479,6 +484,20 @@ function App() {
           );
         })}
 
+        {/* <textarea
+          value={currentText + " wiggity wack"}
+          className="currCommand box-border leading-5 py-2 "
+          style={{
+            height: `${(currentText.split(/\n/g).length || 1) * 1.25 + 1}rem`,
+            width: `calc(100dvw - ${sideBarWidthInPixels}px - 1rem)`,
+            position: "absolute",
+            top: y,
+            left: x,
+            background: "transparent",
+            color: "#999",
+            zIndex: 2,
+          }}
+        ></textarea> */}
         <textarea
           autoFocus
           tabIndex={0}
