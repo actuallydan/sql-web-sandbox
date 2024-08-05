@@ -6,7 +6,7 @@ import Providers from "@/components/providers";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "SQL Web Sandbox",
+  title: "SQLite Studio",
   description: "Test SQLlite in the browser. No internet connection required!",
 };
 
