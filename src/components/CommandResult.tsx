@@ -50,26 +50,34 @@ export default function CommandResult({
     a.remove();
   };
 
+  const getCSVFromJSON = (json: Record<string, any>[]) => {
+    let csvString = "";
+
+    if (json.length === 0) {
+      return;
+    }
+
+    const headers = Object.keys(json[0]);
+
+    csvString += headers.join(",") + "\n";
+
+    for (let i = 0; i < json.length; i++) {
+      const row = Object.values(json[i]);
+      csvString += row.join(",") + "\n";
+    }
+    return csvString;
+  };
+
   const exportToCSV = () => {
     const { output } = command;
 
     if (!output) {
       return;
     }
+    const csvString = getCSVFromJSON(output);
 
-    let csvString = "";
-
-    if (output.length === 0) {
+    if (!csvString) {
       return;
-    }
-
-    const headers = Object.keys(output[0]);
-
-    csvString += headers.join(",") + "\n";
-
-    for (let i = 0; i < output.length; i++) {
-      const row = Object.values(output[i]);
-      csvString += row.join(",") + "\n";
     }
 
     const blob = new Blob([csvString], { type: "text/csv" });
@@ -81,6 +89,32 @@ export default function CommandResult({
     a.click();
 
     a.remove();
+  };
+
+  const copyCSVToClipboard = () => {
+    const { output } = command;
+
+    if (!output) {
+      return;
+    }
+    const csvString = getCSVFromJSON(output);
+
+    if (!csvString) {
+      return;
+    }
+
+    navigator.clipboard.writeText(csvString);
+  };
+
+  const copyJSONToClipboard = () => {
+    const { output } = command;
+
+    if (!output) {
+      return;
+    }
+
+    const data = JSON.stringify(output, null, 2);
+    navigator.clipboard.writeText(data);
   };
 
   const copyQueryToClipboard = () => {
@@ -111,24 +145,21 @@ export default function CommandResult({
       </div>
       {command.output ? (
         <div>
-          <p className="text-xs text-gray-300 p-1">
+          <p className={`text-xs p-1`} style={{ color: theme.output }}>
             {command.output.length} row(s) returned{" "}
           </p>
           {command.output.length ? (
             <div>
               <button
                 onMouseDown={() => setDisplayAsTable(!displayAsTable)}
-                className="text-[0.5rem] text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
+                className={`text-[0.5rem] hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1`}
               >
                 Display as {displayAsTable ? "JSON" : "Table"}
               </button>
               {displayAsTable ? (
                 <div className="resultBlockWrapper my-2 mx-1 rounded-sm">
                   <div className="resultBlock">
-                    <table
-                      className="border"
-                      style={{ borderColor: theme.output }}
-                    >
+                    <table className={`border border-[${theme.output}]`}>
                       <thead>
                         <tr>
                           {Object.keys(command.output[0]).map((key, index) => (
@@ -181,24 +212,36 @@ export default function CommandResult({
             </div>
           ) : null}
           {command.output ? (
-            <div>
+            <div className="mb-2">
               <button
                 onMouseDown={exportToJSON}
-                className="text-[0.5rem] text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
+                className={`text-[0.5rem] text-[${theme.input}] hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1`}
               >
                 Export to JSON
               </button>
               <button
                 onMouseDown={exportToCSV}
-                className="text-[0.5rem] text-gray-500 hover:text-green-400 cursor-pointer border-transparent border hover:border-green-400 rounded-sm  p-1"
+                className={`text-[0.5rem] text-[${theme.input}] hover:text-green-400 cursor-pointer border-transparent border hover:border-green-400 rounded-sm  p-1`}
               >
                 Export to CSV
               </button>
               <button
                 onMouseDown={copyQueryToClipboard}
-                className="text-[0.5rem] text-gray-500 hover:text-purple-400 cursor-pointer border-transparent border hover:border-purple-400 rounded-sm  p-1"
+                className={`text-[0.5rem] text-[${theme.input}] hover:text-purple-400 cursor-pointer border-transparent border hover:border-purple-400 rounded-sm  p-1`}
               >
                 Copy Query
+              </button>
+              <button
+                onMouseDown={copyCSVToClipboard}
+                className={`text-[0.5rem] text-[${theme.input}] hover:text-yellow-400 cursor-pointer border-transparent border hover:border-yellow-400 rounded-sm  p-1`}
+              >
+                Copy CSV
+              </button>
+              <button
+                onMouseDown={copyJSONToClipboard}
+                className={`text-[0.5rem] text-[${theme.input}] hover:text-red-400 cursor-pointer border-transparent border hover:border-red-400 rounded-sm  p-1`}
+              >
+                Copy JSON
               </button>
             </div>
           ) : null}
