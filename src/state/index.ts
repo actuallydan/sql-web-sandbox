@@ -9,6 +9,7 @@ const defaultTheme = {
   autoSuggestHighlight: "#60a5fa",
   error: "#ff0000",
   sideBarTabActive: "#DDD",
+  output: "#e9e9e9",
 };
 
 const defaultValues = {

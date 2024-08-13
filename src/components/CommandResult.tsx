@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { MouseEvent, KeyboardEvent } from "react";
 import { keywordsMap } from "@/utils/sqlite";
 import { Command } from "@/types/sql";
@@ -22,6 +23,8 @@ export default function CommandResult({
   reRunCommand,
 }: CommandResultProps) {
   const [theme] = useAtom(themeAtom);
+  const [displayAsTable, setDisplayAsTable] = useState(true);
+
   const commandClass = isActive ? "prevCommand activeCommand" : "prevCommand";
 
   const _reRunCommand = (ev: MouseEvent<HTMLButtonElement>) => {
@@ -111,9 +114,72 @@ export default function CommandResult({
           <p className="text-xs text-gray-300 p-1">
             {command.output.length} row(s) returned{" "}
           </p>
-          <pre className="resultBlock">
-            {JSON.stringify(command.output, null, 2)}
-          </pre>
+          {command.output.length ? (
+            <div>
+              <button
+                onMouseDown={() => setDisplayAsTable(!displayAsTable)}
+                className="text-[0.5rem] text-gray-500 hover:text-blue-400 cursor-pointer border-transparent border hover:border-blue-400 rounded-sm  p-1"
+              >
+                Display as {displayAsTable ? "JSON" : "Table"}
+              </button>
+              {displayAsTable ? (
+                <div className="resultBlockWrapper my-2 mx-1 rounded-sm">
+                  <div className="resultBlock">
+                    <table
+                      className="border"
+                      style={{ borderColor: theme.output }}
+                    >
+                      <thead>
+                        <tr>
+                          {Object.keys(command.output[0]).map((key, index) => (
+                            <th
+                              key={index}
+                              className="border p-1 px-2 text-left"
+                              style={{
+                                borderColor: theme.sidebar,
+                                color: theme.sidebar,
+                                backgroundColor: theme.output,
+                              }}
+                            >
+                              {key}
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {command.output.map(
+                          (row: Record<string, any>, index) => (
+                            <tr key={index}>
+                              {Object.values(row).map((value, index) => (
+                                <td
+                                  key={index}
+                                  className="border p-1 px-2 text-left"
+                                  style={{ borderColor: theme.output }}
+                                >
+                                  {value}
+                                </td>
+                              ))}
+                            </tr>
+                          )
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <pre
+                    className="resultBlock border my-2 mx-1 rounded"
+                    style={{
+                      borderColor: theme.input,
+                    }}
+                  >
+                    {JSON.stringify(command.output, null, 2)}
+                  </pre>
+                </div>
+              )}
+            </div>
+          ) : null}
           {command.output ? (
             <div>
               <button

@@ -1,9 +1,4 @@
-import {
-  DetailedHTMLProps,
-  forwardRef,
-  HTMLAttributes,
-  LegacyRef,
-} from "react";
+import { forwardRef, HTMLAttributes } from "react";
 
 type SidebarResizeHandlerProps = {
   sideBarWidthInPixels: number;
