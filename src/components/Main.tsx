@@ -5,28 +5,18 @@ import {
   useEffect,
   type KeyboardEvent,
   type MouseEvent,
+  type ChangeEvent,
 } from "react";
 import type { Database } from "@sqlite.org/sqlite-wasm";
 import { API, initializeSQLite, keywords } from "../utils/sqlite";
 import { ulid } from "ulidx";
 import { getCaretCoordinates } from "@/utils/textarea";
 import AutoSuggest from "./AutoSuggest";
-import type { TableColumn, TableSchema, Command } from "@/types/sql";
+import type { Command } from "@/types/sql";
 import CommandResult from "./CommandResult";
-import { ResizableBox } from "react-resizable";
-import SidebarResizeHandle from "@/components/SidebarResizeHandle";
-import { sideBarWidthAtom, themeAtom } from "@/state";
+import { sideBarWidthAtom, themeAtom, tablesAtom } from "@/state";
 import { useAtom } from "jotai";
-
-type ResizeCallbackData = {
-  node: HTMLElement;
-  size: { width: number; height: number };
-  handle: ResizeHandleAxis;
-};
-
-type ResizeHandleAxis = "s" | "w" | "e" | "n" | "sw" | "nw" | "se" | "ne";
-
-const navItems = ["tables", "settings"] as const;
+import Sidebar from "./Sidebar";
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
@@ -98,14 +88,12 @@ function App() {
   const [currentText, setCurrentText] = useState<string>("");
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
   const [db, setDB] = useState<Database | null>(null);
-  const [tables, setTables] = useState<TableSchema[]>([]);
+  const [tables, setTables] = useAtom(tablesAtom);
+
   const [theme] = useAtom(themeAtom);
   const [windowResizeActive, setWindowResizeActive] = useState(false);
   const [sideBarWidthInPixels, setSideBarWidthInPixels] =
     useAtom(sideBarWidthAtom);
-  const [selectedRoute, setSelectedRoute] = useState<(typeof navItems)[number]>(
-    navItems[0]
-  );
 
   const navigateKeywordsInAutoSuggest = (
     event: KeyboardEvent<HTMLTextAreaElement>
@@ -377,12 +365,27 @@ function App() {
     setSelectedAutoSuggestIndex(0);
   }, [currentText, coords]);
 
-  // On top layout
-  const onResize = (
-    _: React.SyntheticEvent<Element, Event>,
-    { size }: ResizeCallbackData
-  ) => {
-    setSideBarWidthInPixels(size.width);
+  const onTextareaChange = (event: ChangeEvent<HTMLTextAreaElement>) => {
+    const lastString = event.target.value.match(/([a-zA-Z]+)$/);
+
+    if (lastString?.[0]) {
+      const element = event.target;
+      const caretCoords = getCaretCoordinates(
+        element,
+        element.selectionEnd - lastString[0].length,
+        undefined
+      );
+
+      setCoords({
+        x: caretCoords.left,
+        y: caretCoords.top + event.target.offsetTop,
+      });
+    } else {
+      setCoords(null);
+    }
+
+    setCommandCursor(null);
+    setCurrentText(event.target.value);
   };
 
   // for implementing typeahead
@@ -392,76 +395,7 @@ function App() {
 
   return (
     <div id="root">
-      <ResizableBox
-        width={sideBarWidthInPixels}
-        height={window.innerHeight}
-        onResize={onResize}
-        handle={
-          <SidebarResizeHandle sideBarWidthInPixels={sideBarWidthInPixels} />
-        }
-      >
-        <div
-          className="sidebar box-content"
-          style={{
-            width: `${sideBarWidthInPixels}px`,
-            backgroundColor: theme.sidebar,
-          }}
-        >
-          <nav className="flex">
-            {navItems.map((item) => (
-              <button
-                key={item}
-                onClick={() => {
-                  setSelectedRoute(item);
-                }}
-                className="font-extrabold text-gray-800 rounded bg-gray-400 w-min px-1 text-sm ml-2"
-                style={{
-                  backgroundColor:
-                    selectedRoute === item
-                      ? theme.sideBarTabActive
-                      : "transparent",
-                  color:
-                    selectedRoute === item
-                      ? theme.sidebar
-                      : theme.sideBarTabActive,
-                }}
-              >
-                {item}
-              </button>
-            ))}
-          </nav>
-          {tables.map((t) => (
-            <div className="sidebar-table-wrapper" key={t.name}>
-              <p>
-                {t.name}{" "}
-                <span className="text-gray-400 text-[0.65rem]">
-                  {t.rowCount} row(s)
-                </span>
-              </p>
-              <ul>
-                {t.columns.map((c: TableColumn) => (
-                  <li key={c.name}>
-                    <span className="text-gray-500">└</span>
-                    <span className="italic">{c.name}</span>
-                    <span className="text-sm">
-                      {c.type}
-                      {c.pk ? (
-                        <span
-                          className="text-[1rem] text-[#ffdd00] ml-1 cursor-pointer"
-                          style={{ color: theme.inputOutline }}
-                          title="primary key"
-                        >
-                          ★
-                        </span>
-                      ) : null}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-      </ResizableBox>
+      <Sidebar />
       <div
         className="terminal box-content"
         style={{
@@ -509,28 +443,7 @@ function App() {
             width: `calc(100dvw - ${sideBarWidthInPixels}px - 1rem)`,
           }}
           id="terminalTextarea"
-          onChange={(event) => {
-            const lastString = event.target.value.match(/([a-zA-Z]+)$/);
-
-            if (lastString?.[0]) {
-              const element = event.target;
-              const caretCoords = getCaretCoordinates(
-                element,
-                element.selectionEnd - lastString[0].length,
-                undefined
-              );
-
-              setCoords({
-                x: caretCoords.left,
-                y: caretCoords.top + event.target.offsetTop,
-              });
-            } else {
-              setCoords(null);
-            }
-
-            setCommandCursor(null);
-            setCurrentText(event.target.value);
-          }}
+          onChange={onTextareaChange}
           placeholder="enter SQL commands..."
         />
         <AutoSuggest
