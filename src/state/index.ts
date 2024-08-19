@@ -1,7 +1,8 @@
 import { atom } from "jotai";
 import type { TableSchema } from "@/types/sql";
+import { sidebarStates, type SingleSidebarState } from "@/types/state";
 
-const defaultTheme = {
+export const defaultTheme = {
   sidebar: "#111111",
   terminal: "#222222",
   input: "#333333",
@@ -23,3 +24,7 @@ export const sideBarWidthAtom = atom(defaultValues.sideBarWidth);
 export const themeAtom = atom<typeof defaultTheme>(defaultValues.theme);
 
 export const tablesAtom = atom<TableSchema[]>([]);
+
+export const selectedSidebarRoute = atom<SingleSidebarState>(
+  sidebarStates.TABLES
+);

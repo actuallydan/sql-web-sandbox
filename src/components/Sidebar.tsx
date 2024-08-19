@@ -2,10 +2,15 @@ import { useState } from "react";
 
 import { ResizableBox } from "react-resizable";
 import { useAtom } from "jotai";
-import { sideBarWidthAtom, themeAtom, tablesAtom } from "@/state";
+import {
+  sideBarWidthAtom,
+  themeAtom,
+  tablesAtom,
+  selectedSidebarRoute,
+} from "@/state";
 import SidebarResizeHandle from "@/components/SidebarResizeHandle";
-import { TableColumn } from "@/types/sql";
-import SidebarTables from "./SidebarTables";
+import { sidebarStates, type SingleSidebarState } from "@/types/state";
+import SidebarRouter from "@/features/SidebarRouter";
 
 type ResizeCallbackData = {
   node: HTMLElement;
@@ -15,16 +20,11 @@ type ResizeCallbackData = {
 
 type ResizeHandleAxis = "s" | "w" | "e" | "n" | "sw" | "nw" | "se" | "ne";
 
-const navItems = ["tables", "settings"] as const;
-
 export default function Sidebar() {
   const [sideBarWidthInPixels, setSideBarWidthInPixels] =
     useAtom(sideBarWidthAtom);
   const [theme] = useAtom(themeAtom);
-  const [selectedRoute, setSelectedRoute] = useState<(typeof navItems)[number]>(
-    navItems[0]
-  );
-  const [tables] = useAtom(tablesAtom);
+  const [selectedRoute, setSelectedRoute] = useAtom(selectedSidebarRoute);
 
   // On top layout
   const onResize = (
@@ -51,11 +51,11 @@ export default function Sidebar() {
         }}
       >
         <nav className="flex">
-          {navItems.map((item) => (
+          {Object.values(sidebarStates).map((item) => (
             <button
               key={item}
               onClick={() => {
-                setSelectedRoute(item);
+                setSelectedRoute(item as SingleSidebarState);
               }}
               className="font-extrabold text-gray-800 rounded bg-gray-400 w-min px-1 text-sm ml-2"
               style={{
@@ -73,7 +73,7 @@ export default function Sidebar() {
             </button>
           ))}
         </nav>
-        <SidebarTables />
+        <SidebarRouter />
       </div>
     </ResizableBox>
   );
