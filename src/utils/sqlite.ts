@@ -78,6 +78,105 @@ export const API = {
 
     return { tables, columns };
   },
+  jsonToSQL: (tableName: string, jsonArray: { [key: string]: any }[]) => {
+    if (!Array.isArray(jsonArray) || jsonArray.length === 0) {
+      throw new Error("Invalid input: JSON array is required.");
+    }
+
+    const columns = Object.keys(jsonArray[0]);
+    const columnDefinitions = columns.map((column) => {
+      const columnType = typeof jsonArray[0][column];
+
+      // Map JavaScript types to SQL types
+      switch (columnType) {
+        case "number":
+          return `${column} INTEGER`;
+        case "string":
+          return `${column} TEXT`;
+        case "boolean":
+          return `${column} BOOLEAN`;
+        default:
+          return `${column} TEXT`; // Default to TEXT for unknown types
+      }
+    });
+
+    const createTableStatement = `CREATE TABLE ${tableName} (${columnDefinitions.join(
+      ", "
+    )});`;
+
+    const insertStatements = jsonArray
+      .map((row) => {
+        const values = columns.map((column) => {
+          const value = row[column];
+          if (typeof value === "string") {
+            return `'${value.replace(/'/g, "''")}'`; // Escape single quotes in strings
+          } else if (value === null || value === undefined) {
+            return "NULL";
+          } else {
+            return value;
+          }
+        });
+
+        return `INSERT INTO ${tableName} (${columns.join(
+          ", "
+        )}) VALUES (${values.join(", ")});`;
+      })
+      .join("\n");
+
+    return `${createTableStatement}\n${insertStatements}`;
+  },
+  csvToSQL: (tableName: string, csvString: string) => {
+    const lines = csvString.trim().split("\n");
+    const headers = lines[0].split(",").map((header: string) => header.trim());
+
+    // Infer column types based on the first data row
+    const firstRow = lines[1]?.split(",").map((value: string) => value.trim());
+    const columnDefinitions = headers.map((header: string, index) => {
+      let columnType = "TEXT"; // Default type
+
+      if (firstRow && firstRow[index] !== undefined) {
+        const value = firstRow[index];
+        if (!isNaN(Number(value))) {
+          columnType = "INTEGER";
+        } else if (
+          value.toLowerCase() === "true" ||
+          value.toLowerCase() === "false"
+        ) {
+          columnType = "BOOLEAN";
+        }
+      }
+
+      return `${header} ${columnType}`;
+    });
+
+    const createTableStatement = `CREATE TABLE ${tableName} (${columnDefinitions.join(
+      ", "
+    )});`;
+
+    const insertStatements = lines
+      .slice(1)
+      .map((line) => {
+        const values = line.split(",").map((value, index) => {
+          value = value.trim();
+          const columnType = columnDefinitions[index].split(" ")[1];
+
+          if (columnType === "TEXT" || columnType === "BOOLEAN") {
+            return `'${value.replace(/'/g, "''")}'`; // Escape single quotes
+          } else if (value === "") {
+            return "NULL";
+          } else {
+            return value;
+          }
+        });
+
+        return `INSERT INTO ${tableName} (${headers.join(
+          ", "
+        )}) VALUES (${values.join(", ")});`;
+      })
+      .join("\n");
+
+    return `${createTableStatement}\n${insertStatements}`;
+  },
 };
 
 export const keywords = [

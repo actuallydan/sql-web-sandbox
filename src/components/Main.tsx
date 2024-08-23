@@ -7,90 +7,38 @@ import {
   type MouseEvent,
   type ChangeEvent,
 } from "react";
-import type { Database } from "@sqlite.org/sqlite-wasm";
 import { API, initializeSQLite, keywords } from "../utils/sqlite";
 import { ulid } from "ulidx";
 import { getCaretCoordinates } from "@/utils/textarea";
 import AutoSuggest from "./AutoSuggest";
 import type { Command } from "@/types/sql";
 import CommandResult from "./CommandResult";
-import { sideBarWidthAtom, themeAtom, tablesAtom } from "@/state";
+import {
+  sideBarWidthAtom,
+  themeAtom,
+  tablesAtom,
+  commandsAtom,
+  autoSuggestSchemaAtom,
+  databaseAtom,
+} from "@/state";
 import { useAtom } from "jotai";
 import Sidebar from "./Sidebar";
+import { useExecuteQuery } from "@/hooks/useExecuteQuery";
 
 function App() {
   const [coords, setCoords] = useState<{ x: number; y: number } | null>(null);
   const [selectedAutoSuggestIndex, setSelectedAutoSuggestIndex] = useState(0);
   const [matchingKeywords, setMatchingKeywords] = useState<string[]>([]);
-  const [autoSuggestSchema, setAutoSuggestSchema] = useState<{
-    tables: string[];
-    columns: string[];
-  }>({ tables: [], columns: [] });
-  const [commands, setCommands] = useState<Command[]>([
-    {
-      time: new Date(),
-      // this is all fucked up for escaping characters
-      text: `
-
-  +-----------------------------------------------+
-  |                                               |
-  |                                               |
-  |                 ___        __                 |
-  |                /\\_ \\    __/\\ \\__              |
-  |    ____     __ \\//\\ \\  /\\_\\ \\ ,_\\    __       |
-  |   /',__\\  /'__\`\\ \\ \\ \\ \\/\\ \\ \\ \\/  /'__\`\\     |
-  |  /\\__, \`\\/\\ \\L\\ \\ \\_\\ \\_\\ \\ \\ \\ \\_/\\  __/     |
-  |  \\/\\____/\\ \\___, \\/\\____\\\\ \\_\\ \\__\\ \\____\\    |
-  |   \\/___/  \\/___/\\ \\/____/ \\/_/\\/__/\\/____/    |
-  |                \\ \\_\\                          |
-  |                 \\/_/                          |
-  |         __                __                  |
-  |        /\\ \\__            /\\ \\  __             |
-  |    ____\\ \\ ,_\\  __  __   \\_\\ \\/\\_\\    ___     |
-  |   /',__\\\\ \\ \\/ /\\ \\/\\ \\  /'_\` \\/\\ \\  / __\`\\   |
-  |  /\\__, \`\\\\ \\ \\_\\ \\ \\_\\ \\/\\ \\L\\ \\ \\ \\/\\ \\L\\ \\  |
-  |  \\/\\____/ \\ \\__\\\\ \\____/\\ \\___,_\\ \\_\\ \\____/  |
-  |   \\/___/   \\/__/ \\/___/  \\/__,_ /\\/_/\\/___/   |
-  |                                               |
-  |                                               |
-  +-----------------------------------------------+
-
-        `,
-      id: "01J1ARWQPD1A0S7CHEXFT21CMB",
-      output: [],
-    },
-    // {
-    //   time: new Date("2024-06-26T17:18:32.163Z"),
-    //   text: "create table users (id integer primary key, name text);",
-    //   id: "01J1ARWQPD1A0S7CHEXFT21CMM",
-    //   output: [],
-    // },
-    // {
-    //   time: new Date("2024-06-26T17:18:53.056Z"),
-    //   text: "insert into users (name) values ('dan');",
-    //   id: "01J1ARXC3VXH77C6V7ZWXS5QS7",
-    //   output: [],
-    // },
-    // {
-    //   time: new Date("2024-06-26T17:19:00.166Z"),
-    //   text: "select * from users;",
-    //   id: "01J1ARXK23N0XA5FN8VN8RRQ07",
-    //   output: [
-    //     {
-    //       name: "dan",
-    //     },
-    //   ],
-    // },
-  ]);
+  const [autoSuggestSchema] = useAtom(autoSuggestSchemaAtom);
+  const [commands, setCommands] = useAtom(commandsAtom);
   const [currentText, setCurrentText] = useState<string>("");
   const [commandCursor, setCommandCursor] = useState<number | null>(null);
-  const [db, setDB] = useState<Database | null>(null);
-  const [tables, setTables] = useAtom(tablesAtom);
+  const [db, setDB] = useAtom(databaseAtom);
 
   const [theme] = useAtom(themeAtom);
-  const [windowResizeActive, setWindowResizeActive] = useState(false);
-  const [sideBarWidthInPixels, setSideBarWidthInPixels] =
-    useAtom(sideBarWidthAtom);
+  const [sideBarWidthInPixels] = useAtom(sideBarWidthAtom);
+
+  const executeQuery = useExecuteQuery();
 
   const navigateKeywordsInAutoSuggest = (
     event: KeyboardEvent<HTMLTextAreaElement>
@@ -160,21 +108,11 @@ function App() {
           return;
         }
 
-        const newId = ulid();
-
-        setCommands((prevEvents) => {
-          const newCommand = {
-            time: new Date(),
-            text: text,
-            id: newId,
-          };
-
-          return [...prevEvents, newCommand];
+        executeQuery(text).then(() => {
+          setCurrentText("");
+          setCommandCursor(null);
+          scrollToBottom();
         });
-
-        executeQuery(text, newId);
-        setCurrentText("");
-        setCommandCursor(null);
 
         break;
       }
@@ -205,19 +143,9 @@ function App() {
   const reRunCommand = (command: Command) => {
     const text = command.text.trim();
 
-    const newId = ulid();
-
-    setCommands((prevEvents) => {
-      const newCommand = {
-        time: new Date(),
-        text,
-        id: newId,
-      };
-
-      return [...prevEvents, newCommand];
+    executeQuery(text).then(() => {
+      scrollToBottom();
     });
-
-    executeQuery(text, newId);
   };
 
   const handleKeyPressForPrevCommand = (
@@ -237,70 +165,17 @@ function App() {
 
     const text = command.text.trim();
 
-    const newId = ulid();
-
-    setCommands((prevEvents) => {
-      const newCommand = {
-        time: new Date(),
-        text,
-        id: newId,
-      };
-
-      return [...prevEvents, newCommand];
+    executeQuery(text).then(() => {
+      setCurrentText("");
+      setCommandCursor(null);
+      scrollToBottom();
     });
-
-    executeQuery(text, newId);
-
-    setCurrentText("");
-    setCommandCursor(null);
   };
 
-  const executeQuery = async (query: string, id: string) => {
-    if (!db) {
-      return;
-    }
-
-    try {
-      let result = db.exec({
-        sql: query,
-        rowMode: "object",
-      }) as unknown as any[];
-
-      setCommands((prevCommands) => {
-        const index = prevCommands.findIndex((c) => c.id === id);
-
-        let newCommands = [...prevCommands];
-
-        if (index !== -1) {
-          newCommands[index].output = result;
-        }
-        return newCommands;
-      });
-
-      const latestTables = API.getTables(db);
-
-      const latestIndexedSchema = API.indexSchema(latestTables);
-
-      setAutoSuggestSchema(latestIndexedSchema);
-      setTables(latestTables);
-    } catch (err: any) {
-      console.error(err.message);
-
-      setCommands((prevCommands) => {
-        const index = prevCommands.findIndex((c) => c.id === id);
-
-        let newCommands = [...prevCommands];
-
-        if (index !== -1) {
-          newCommands[index].error = err.message;
-        }
-        return newCommands;
-      });
-    } finally {
-      const textarea = document.getElementById("terminalTextarea");
-      if (textarea) {
-        textarea.scrollIntoView();
-      }
+  const scrollToBottom = () => {
+    const textarea = document.getElementById("terminalTextarea");
+    if (textarea) {
+      textarea.scrollIntoView();
     }
   };
 
